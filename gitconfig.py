@@ -11,9 +11,9 @@ import platform
 import getpass
 import time
 from enum import Enum
-
+from sys import argv
 class Server_info(Enum):
-    IP = ''
+    IP = argv[1]
     PORT = 22
 
 class User:
