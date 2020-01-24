@@ -1,3 +1,7 @@
+#! ./venv/bin/python3
+
+_author = 'omid'
+
 import pam
 import os
 import pwd
@@ -195,7 +199,7 @@ def main():
             if repository.user_existence():
                 if repository.user_authentication():
                     if repository.repo_existence():
-                        print(f"repository already exists\nclone or remote with ssh: {repository.repo_path}")
+                        print(f"repository already exists\nclone or remote with ssh: {repository.repo_link}")
                         break
                         exit(0)
                     else:
