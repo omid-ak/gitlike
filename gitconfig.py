@@ -12,6 +12,7 @@ import getpass
 import time
 from enum import Enum
 from sys import argv
+
 class Server_info(Enum):
     IP = argv[1]
     PORT = 22
@@ -177,7 +178,7 @@ def main():
                     dl_ch = input(f"Are you sure you want to delete user {user.username} ? (y/n): ")
                     if dl_ch == 'y':
                         user.delete_user()
-                        print(f"user {self.username} deleted")
+                        print(f"user {user.username} deleted")
                         break
                         exit(0)
                     else:
