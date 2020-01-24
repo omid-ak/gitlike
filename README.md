@@ -10,6 +10,6 @@ Instructions:
 
 `pip install -r requirements.txt`
 
-then get the permission to execute or run with python.
+then give the permission to execute or run with python.
 
 `python gitconfig.py <your_server_ipaddress>`
