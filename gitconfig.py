@@ -38,12 +38,16 @@ class User:
     def create_user(self):
         encPass = crypt.crypt(self.password, "22")
         os.system(f"useradd -p {encPass} {self.username}")
+        if os.path.exists(f"/repositories/{self.username}") == False:
+            os.mkdir(f"/repositories/{self.username}")
 
     def delete_user(self):
-        os.system(f"userdel {self.username}")
-        shutil.rmtree(f"/home/{self.username}")
-        shutil.rmtree(f"/repositories/{self.username}/")
-
+        try:
+            os.system(f"userdel {self.username}")
+            shutil.rmtree(f"/home/{self.username}")
+            shutil.rmtree(f"/repositories/{self.username}/")
+        except:
+            pass
     def change_shell(self, shell):
         os.system(f"usermod --shell {shell} {self.username}")
     
@@ -181,7 +185,8 @@ def main():
             user = User(username, password)
             if user.user_existence():
                 if user.user_authentication():
-                    dl_ch = input(f"Are you sure you want to delete user {user.username} ? (y/n): ")
+                    dl_ch = input(f"Also all repositories for {user.username} will be remove\n"
+                                  f"Are you sure you want to delete user {user.username} ? (y/n): ")
                     if dl_ch == 'y':
                         user.delete_user()
                         print(f"user {user.username} deleted")
