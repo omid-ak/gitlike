@@ -223,7 +223,7 @@ def main():
                         dl_ch = input(f"Are you sure you want to delete repository {repository.repo_name} ? (y/n): ")
                         if dl_ch == 'y':
                             repository.delete_repository()
-                            print(f"repositoty {repository.repo_name} deleted")
+                            print(f"repository {repository.repo_name} deleted")
                             break
                             exit(0)
                         else:
