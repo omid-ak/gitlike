@@ -133,10 +133,11 @@ def main():
         exit(0)
 
     # install git
-    if detect_distro_type() == 'redhat':
-        os.system('yum update -y && yum install git -y')
-    elif detect_distro_type() == 'debian':
-        os.system('apt update -y && apt install git -y')
+    if os.path.exists("/usr/bin/git") == False:
+        if detect_distro_type() == 'redhat':
+            os.system('yum update -y && yum install git -y')
+        elif detect_distro_type() == 'debian':
+            os.system('apt update -y && apt install git -y')
     # create shell
     shell = Shell("/bin/git-shell")
     if not shell.shell_existence():
@@ -147,7 +148,7 @@ def main():
         group.create_group()
     def menue():
         os.system("clear")
-        print('''choose : \n 1)create user\n2)delete user\n3)create repo\n4)delete repo 5)get repo link\n5)exit\n''')
+        print('choose :\n1)create user\n2)delete user\n3)create repo\n4)delete repo\n5)get repo link\n6)exit\n')
 
     while True:
         menue()
@@ -222,7 +223,9 @@ def main():
                         dl_ch = input(f"Are you sure you want to delete repository {repository.repo_name} ? (y/n): ")
                         if dl_ch == 'y':
                             repository.delete_repository()
-
+                            print(f"repositoty {repository.repo_name} deleted")
+                            break
+                            exit(0)
                         else:
                             print("Aborted!")
                             break
