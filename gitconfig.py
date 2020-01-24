@@ -12,6 +12,7 @@ import getpass
 import time
 from enum import Enum
 from sys import argv
+import shutil
 
 class Server_info(Enum):
     IP = argv[1]
@@ -40,6 +41,8 @@ class User:
 
     def delete_user(self):
         os.system(f"userdel {self.username}")
+        shutil.rmtree(f"/home/{self.username}")
+        shutil.rmtree(f"/repositories/{self.username}/")
 
     def change_shell(self, shell):
         os.system(f"usermod --shell {shell} {self.username}")
@@ -73,15 +76,16 @@ class Shell:
 class Repository(User, Group):
     def __init__(self, repo_name, username, password, group_name):
         self.repo_name = repo_name
-        User.__init__(username, password)
-        Group.__init__(group_name)
+        User.__init__(self, username, password)
+        Group.__init__(self, group_name)
         self.repo_link = None
         self.repo_path = None
         self.get_repo_link_and_path()
 
     def get_repo_link_and_path(self):
         self.repo_path = f"/repositories/{self.username}/{self.repo_name}.git"
-        self.repo_link = f"ssh://{self.username}@{Server_info.IP}:{Server_info.PORT}{self.repo_link}"
+        self.repo_link = f"ssh://{self.username}@{Server_info.IP.value}:{Server_info.PORT.value}{self.repo_path}"
+
 
     def repo_existence(self):
         if os.path.exists(self.repo_path):
@@ -94,11 +98,13 @@ class Repository(User, Group):
         os.chdir(self.repo_path)
         os.system("git init --bare --share=group")
         os.system(f"chgrp -R {self.grp_name} .")
-        os.symlink(self.repo_path, f"/home/{self.username}/")
+        os.system(f"ln -s {self.repo_path} /home/{self.username}")
         os.chown(f"/home/{self.username}/", pwd.getpwnam(self.username).pw_uid, grp.getgrnam(self.grp_name).gr_gid)
 
     def delete_repository(self):
-        os.rmdir(self.repo_path)
+        os.unlink(f"/home/{self.username}/{self.repo_name}.git")
+        shutil.rmtree(self.repo_path)
+
 
 def detect_distro_type():
     redhat = ['fedora', 'centos', 'suse']
@@ -130,7 +136,7 @@ def main():
     os.system("clear")
     # check for root
     if os.geteuid() != 0:
-        print('Permission denied')
+        print('Permission denied run only with root user')
         exit(0)
 
     # install git
@@ -156,7 +162,7 @@ def main():
         choice = input()
         if choice == '1': # create user
             username = input("username: ")
-            password = getpass.getpass(f"[git] password for {username}")
+            password = getpass.getpass(f"[git] password for {username}: ")
             user = User(username, password)
             if user.user_existence():
                 print("user exists")
@@ -171,7 +177,7 @@ def main():
                 continue
         elif choice == '2': # delete user
             username = input("username: ")
-            password = getpass.getpass(f"[git] password for {username}")
+            password = getpass.getpass(f"[git] password for {username}: ")
             user = User(username, password)
             if user.user_existence():
                 if user.user_authentication():
@@ -195,7 +201,7 @@ def main():
                 continue
         elif choice == '3': # create repo
             username = input("username: ")
-            password = getpass.getpass(f"[git] password for {username}")
+            password = getpass.getpass(f"[git] password for {username}: ")
             repo_name = input("Enter repository name: ")
             repository = Repository(repo_name, username, password, group.grp_name)
             if repository.user_existence():
@@ -215,7 +221,7 @@ def main():
                     exit(0)
         elif choice == '4': # delete repo
             username = input("username: ")
-            password = getpass.getpass(f"[git] password for {username}")
+            password = getpass.getpass(f"[git] password for {username}: ")
             repo_name = input("Enter repository name: ")
             repository = Repository(repo_name, username, password, group.grp_name)
             if repository.user_existence():
@@ -241,13 +247,13 @@ def main():
                     exit(0)
         elif choice == '5': # get repo link
             username = input("username: ")
-            password = getpass.getpass(f"[git] password for {username}")
+            password = getpass.getpass(f"[git] password for {username}: ")
             repo_name = input("Enter repository name: ")
             repository = Repository(repo_name, username, password, group.grp_name)
             if repository.user_existence():
                 if repository.user_authentication():
                     if repository.repo_existence():
-                        print(f"repository created successfully.\nclone or remote with ssh: {repository.repo_link}")
+                        print(f"clone or remote with ssh: {repository.repo_link}")
                         break
                         exit(0)
                     else:
