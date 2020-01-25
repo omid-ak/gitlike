@@ -162,6 +162,10 @@ def main():
     group = Group('git_users')
     if not group.group_existence():
         group.create_group()
+    # init dir
+    if os.path.exists("repositories") == False:
+        os.mkdir("/repositories")
+
     def menue():
         os.system("clear")
         print('choose :\n'
@@ -288,7 +292,7 @@ def main():
             username = input("username: ")
             password = getpass.getpass(f"[git] password for {username}: ")
             repo_name = input("Enter repository name: ")
-            member = input("username of contributor: ") # maybe this member not exists at all :/ check for memeber existence
+            member = input("username of contributor: ")
             repository = Repository(repo_name, username, password, group.grp_name)
             if repository.user_existence():
                 if repository.user_authentication():
@@ -315,7 +319,7 @@ def main():
             username = input("username: ")
             password = getpass.getpass(f"[git] password for {username}: ")
             repo_name = input("Enter repository name: ")
-            member = input("username of contributor: ") # maybe this member not exists at all :/ check for memeber existence
+            member = input("username of contributor: ")
             repository = Repository(repo_name, username, password, group.grp_name)
             if repository.user_existence():
                 if repository.user_authentication():
