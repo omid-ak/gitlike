@@ -109,6 +109,11 @@ class Repository(User, Group):
         os.unlink(f"/home/{self.username}/{self.repo_name}.git")
         shutil.rmtree(self.repo_path)
 
+    def add_contributor(self, member):
+        os.system(f"ln -s {self.repo_path} /repositories/{member}/{self.repo_name}")
+
+    def remove_contributor(self, member):
+        os.unlink(f"/repositories/{member}/{self.repo_name}")
 
 def detect_distro_type():
     redhat = ['fedora', 'centos', 'suse']
@@ -159,7 +164,16 @@ def main():
         group.create_group()
     def menue():
         os.system("clear")
-        print('choose :\n1)create user\n2)delete user\n3)create repo\n4)delete repo\n5)get repo link\n6)exit\n')
+        print('choose :\n'
+              '1)create user\n'
+              '2)delete user\n'
+              '3)create repo\n'
+              '4)delete repo\n'
+              '5)get repo link\n'
+              '6)add contributor to repo\n'
+              '7)remove contributor from repo\n'
+              '8)exit\n'
+              )
 
     while True:
         menue()
@@ -201,7 +215,7 @@ def main():
                     break
                     exit(0)
             else:
-                print("user not found")
+                print(f"user {user.username} not found")
                 time.sleep(3)
                 continue
         elif choice == '3': # create repo
@@ -269,7 +283,62 @@ def main():
                     print("Authentication Failed !")
                     break
                     exit(0)
-        elif choice == '6': # exit
+
+        elif choice == '6':
+            username = input("username: ")
+            password = getpass.getpass(f"[git] password for {username}: ")
+            repo_name = input("Enter repository name: ")
+            member = input("username of contributor: ") # maybe this member not exists at all :/ check for memeber existence
+            repository = Repository(repo_name, username, password, group.grp_name)
+            if repository.user_existence():
+                if repository.user_authentication():
+                    if repository.repo_existence():
+                        member_user = User(member, '')
+                        if member_user.user_existence():
+                            repository.add_contributor(member)
+                            print(f"{member} added to repository {repository.repo_name}")
+                            break
+                            exit(0)
+                        else:
+                            print(f"user {member_user.username} not found")
+                            break
+                            exit(0)
+                    else:
+                        print(f"repository {repository.repo_name} not found for user {repository.username}!")
+                        break
+                        exit(0)
+                else:
+                    print("Authentication Failed !")
+                    break
+                    exit(0)
+        elif choice == '7':
+            username = input("username: ")
+            password = getpass.getpass(f"[git] password for {username}: ")
+            repo_name = input("Enter repository name: ")
+            member = input("username of contributor: ") # maybe this member not exists at all :/ check for memeber existence
+            repository = Repository(repo_name, username, password, group.grp_name)
+            if repository.user_existence():
+                if repository.user_authentication():
+                    if repository.repo_existence():
+                        member_user = User(member, '')
+                        if member_user.user_existence():
+                            repository.remove_contributor(member)
+                            print(f"{member} removed from repository {repository.repo_name}")
+                            break
+                            exit(0)
+                        else:
+                            print(f"user {member_user.username} not found")
+                            break
+                            exit(0)
+                    else:
+                        print(f"repository {repository.repo_name} not found for user {repository.username}!")
+                        break
+                        exit(0)
+                else:
+                    print("Authentication Failed !")
+                    break
+                    exit(0)
+        elif choice == '8': # exit
             print("Bye!")
             break
             exit(0)
