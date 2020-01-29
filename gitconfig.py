@@ -1,6 +1,6 @@
 #! ./venv/bin/python3
 
-_author = 'omid'
+_author = "omid"
 
 import pam
 import os
@@ -8,14 +8,14 @@ import pwd
 import crypt
 import grp
 import platform
-import getpass
-import time
 from enum import Enum
-from sys import argv
 import shutil
+import socket
+from threading import Thread
+import pickle
 
 class Server_info(Enum):
-    IP = argv[1]
+    IP = socket.gethostbyname(socket.gethostname())
     PORT = 22
 
 class User:
@@ -110,10 +110,10 @@ class Repository(User, Group):
         shutil.rmtree(self.repo_path)
 
     def add_contributor(self, member):
-        os.system(f"ln -s {self.repo_path} /repositories/{member}/{self.repo_name}")
+        os.system(f"ln -s {self.repo_path} /repositories/{member}/{self.repo_name}.git")
 
-    def remove_contributor(self, member):
-        os.unlink(f"/repositories/{member}/{self.repo_name}")
+    def remove_contributor(self, member, repo_name):
+        os.unlink(f"/repositories/{member}/{repo_name}.git")
 
 def detect_distro_type():
     redhat = ['fedora', 'centos', 'suse']
@@ -141,12 +141,200 @@ def detect_distro_type():
     return distro_type
 
 
+
+def handler(main_socket, client, addr):
+    c_ip = addr[0]
+    c_port = addr[1]
+
+    try:
+        while True:
+
+            rec_data = pickle.loads(client.recv(1024))
+
+            choose_return = choose(choice=rec_data.get('choice'),
+                                   username=rec_data.get('username'),
+                                   password=rec_data.get('password'),
+                                   repo_name=rec_data.get('repo_name', None),
+                                   member=rec_data.get('member', None),
+                                   delete_response=rec_data.get('delete_response', None)
+                                   )
+            response = {
+                        'msg': choose_return
+                        }
+            client.sendall(pickle.dumps(response))
+            if rec_data['choice'] == '8':
+                client.close()
+
+    except (OSError, EOFError):
+        pass
+
+
+"""kwargs: {choice:#, username:#, password:#, member:#/emp, repo_name:#/emp}"""
+
+def choose(**kwargs):
+    response_message = None
+
+    # create shell
+    shell = Shell("/bin/git-shell")
+    if shell.shell_existence() == False:
+        shell.create_shell()
+    # create group
+    group = Group('git_users')
+    if group.group_existence() == False:
+        group.create_group()
+
+    choice = kwargs['choice']
+    # create user
+    if choice == '1':
+        username = kwargs['username']
+        password = kwargs['password']
+        user = User(username, password)
+        if user.user_existence():
+            response_message = "user exists"
+
+        else:
+            user.create_user()
+            user.change_shell(shell.sh_name)
+            user.add_to_group(group.grp_name)
+            response_message = f"user {user.username} created successfully."
+
+    # delete user
+    elif choice == '2':
+        username = kwargs['username']
+        password = kwargs['password']
+        user = User(username, password)
+        if user.user_existence():
+            if user.user_authentication():
+                dl_ch = kwargs['delete_response']
+                if dl_ch == 'y':
+                    user.delete_user()
+
+                    response_message = f"user {user.username} deleted"
+
+                else:
+                    response_message = "Aborted!"
+
+            else:
+                response_message = "Authentication Failed !"
+
+        else:
+            response_message = f"user {user.username} not found"
+
+    # create repo
+    elif choice == '3':
+        username = kwargs['username']
+        password = kwargs['password']
+        repo_name = kwargs['repo_name']
+        repository = Repository(repo_name, username, password, group.grp_name)
+        if repository.user_existence():
+            if repository.user_authentication():
+                if repository.repo_existence():
+                    response_message = f"repository already exists\nclone or remote with ssh: {repository.repo_link}"
+                else:
+                    repository.create_repository()
+                    response_message = f"repository created successfully.\nclone or remote with ssh: {repository.repo_link}"
+
+            else:
+                response_message = "Authentication Failed !"
+
+    # delete repo
+    elif choice == '4':
+        username = kwargs['username']
+        password = kwargs['password']
+        repo_name = kwargs['repo_name']
+        repository = Repository(repo_name, username, password, group.grp_name)
+        if repository.user_existence():
+            if repository.user_authentication():
+                if repository.repo_existence():
+                    dl_ch = kwargs['delete_response']
+                    if dl_ch == 'y':
+                        repository.delete_repository()
+                        response_message = f"repository {repository.repo_name} deleted"
+
+                    else:
+                        response_message = "Aborted!"
+
+                else:
+                    response_message = f"repository {repository.repo_name} not found for user {repository.username}!"
+
+            else:
+                response_message = "Authentication Failed !"
+
+    # get repo link
+    elif choice == '5':
+
+        username = kwargs['username']
+        password = kwargs['password']
+        repo_name = kwargs['repo_name']
+        repository = Repository(repo_name, username, password, group.grp_name)
+        if repository.user_existence():
+            if repository.user_authentication():
+                if repository.repo_existence():
+                    response_message = f"clone or remote with ssh: {repository.repo_link}"
+                else:
+                    response_message = f"repository {repository.repo_name} not found for user {repository.username}!"
+            else:
+                response_message = "Authentication Failed !"
+
+    # add member to repo
+    elif choice == '6':
+        username = kwargs['username']
+        password = kwargs['password']
+        repo_name = kwargs['repo_name']
+        repository = Repository(repo_name, username, password, group.grp_name)
+        member = kwargs['member']
+        if repository.user_existence():
+            if repository.user_authentication():
+                if repository.repo_existence():
+                    member_user = User(member, '')
+                    if member_user.user_existence():
+                        repository.add_contributor(member)
+                        response_message = f"{member} added to repository {repository.repo_name}"
+
+                    else:
+                        response_message = f"user {member_user.username} not found"
+                else:
+                    response_message = f"repository {repository.repo_name} not found for user {repository.username}!"
+            else:
+                response_message = "Authentication Failed !"
+
+    # remove member from repo
+    elif choice == '7':
+        username = kwargs['username']
+        password = kwargs['password']
+        repo_name = kwargs['repo_name']
+        member = kwargs['member']
+        repository = Repository(repo_name, username, password, group.grp_name)
+        if repository.user_existence():
+            if repository.user_authentication():
+                if repository.repo_existence():
+                    member_user = User(member, '')
+                    if member_user.user_existence():
+                        repository.remove_contributor(member, repo_name)
+                        response_message = f"{member} removed from repository {repository.repo_name}"
+
+                    else:
+                        response_message = f"user {member_user.username} not found"
+
+                else:
+                    response_message = f"repository {repository.repo_name} not found for user {repository.username}!"
+
+            else:
+                response_message = "Authentication Failed !"
+
+    else:
+        response_message = 'Unknown command !'
+
+    print(response_message)
+    return response_message
+
 def main():
-    os.system("clear")
     # check for root
     if os.geteuid() != 0:
         print('Permission denied run only with root user')
         exit(0)
+    print('initializing...')
+    print('checking for git installation...')
 
     # install git
     if os.path.exists("/usr/bin/git") == False:
@@ -154,200 +342,28 @@ def main():
             os.system('yum update -y && yum install git -y')
         elif detect_distro_type() == 'debian':
             os.system('apt update -y && apt install git -y')
-    # create shell
-    shell = Shell("/bin/git-shell")
-    if not shell.shell_existence():
-        shell.create_shell()
-    # create group
-    group = Group('git_users')
-    if not group.group_existence():
-        group.create_group()
+
     # init dir
-    if os.path.exists("repositories") == False:
+    if os.path.exists("/repositories") == False:
         os.mkdir("/repositories")
+    main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    def menue():
-        os.system("clear")
-        print('choose :\n'
-              '1)create user\n'
-              '2)delete user\n'
-              '3)create repo\n'
-              '4)delete repo\n'
-              '5)get repo link\n'
-              '6)add contributor to repo\n'
-              '7)remove contributor from repo\n'
-              '8)exit\n'
-              )
+    # connection
+    ip = '0.0.0.0'
+    port = 7920
+    main_socket.bind((ip, port))
 
-    while True:
-        menue()
-        choice = input()
-        if choice == '1': # create user
-            username = input("username: ")
-            password = getpass.getpass(f"[git] password for {username}: ")
-            user = User(username, password)
-            if user.user_existence():
-                print("user exists")
-                time.sleep(3)
-                continue
-            else:
-                user.create_user()
-                user.change_shell(shell.sh_name)
-                user.add_to_group(group.grp_name)
-                print(f"user {user.username} created successfully.")
-                time.sleep(3)
-                continue
-        elif choice == '2': # delete user
-            username = input("username: ")
-            password = getpass.getpass(f"[git] password for {username}: ")
-            user = User(username, password)
-            if user.user_existence():
-                if user.user_authentication():
-                    dl_ch = input(f"Also all repositories for {user.username} will be remove\n"
-                                  f"Are you sure you want to delete user {user.username} ? (y/n): ")
-                    if dl_ch == 'y':
-                        user.delete_user()
-                        print(f"user {user.username} deleted")
-                        break
-                        exit(0)
-                    else:
-                        print("Aborted!")
-                        break
-                        exit(0)
-                else:
-                    print("Authentication Failed !")
-                    break
-                    exit(0)
-            else:
-                print(f"user {user.username} not found")
-                time.sleep(3)
-                continue
-        elif choice == '3': # create repo
-            username = input("username: ")
-            password = getpass.getpass(f"[git] password for {username}: ")
-            repo_name = input("Enter repository name: ")
-            repository = Repository(repo_name, username, password, group.grp_name)
-            if repository.user_existence():
-                if repository.user_authentication():
-                    if repository.repo_existence():
-                        print(f"repository already exists\nclone or remote with ssh: {repository.repo_link}")
-                        break
-                        exit(0)
-                    else:
-                        repository.create_repository()
-                        print(f"repository created successfully.\nclone or remote with ssh: {repository.repo_link}")
-                        break
-                        exit(0)
-                else:
-                    print("Authentication Failed !")
-                    break
-                    exit(0)
-        elif choice == '4': # delete repo
-            username = input("username: ")
-            password = getpass.getpass(f"[git] password for {username}: ")
-            repo_name = input("Enter repository name: ")
-            repository = Repository(repo_name, username, password, group.grp_name)
-            if repository.user_existence():
-                if repository.user_authentication():
-                    if repository.repo_existence():
-                        dl_ch = input(f"Are you sure you want to delete repository {repository.repo_name} ? (y/n): ")
-                        if dl_ch == 'y':
-                            repository.delete_repository()
-                            print(f"repository {repository.repo_name} deleted")
-                            break
-                            exit(0)
-                        else:
-                            print("Aborted!")
-                            break
-                            exit(0)
-                    else:
-                        print(f"repository {repository.repo_name} not found for user {repository.username}!")
-                        break
-                        exit(0)
-                else:
-                    print("Authentication Failed !")
-                    break
-                    exit(0)
-        elif choice == '5': # get repo link
-            username = input("username: ")
-            password = getpass.getpass(f"[git] password for {username}: ")
-            repo_name = input("Enter repository name: ")
-            repository = Repository(repo_name, username, password, group.grp_name)
-            if repository.user_existence():
-                if repository.user_authentication():
-                    if repository.repo_existence():
-                        print(f"clone or remote with ssh: {repository.repo_link}")
-                        break
-                        exit(0)
-                    else:
-                        print(f"repository {repository.repo_name} not found for user {repository.username}!")
-                        break
-                        exit(0)
-                else:
-                    print("Authentication Failed !")
-                    break
-                    exit(0)
-
-        elif choice == '6':
-            username = input("username: ")
-            password = getpass.getpass(f"[git] password for {username}: ")
-            repo_name = input("Enter repository name: ")
-            member = input("username of contributor: ")
-            repository = Repository(repo_name, username, password, group.grp_name)
-            if repository.user_existence():
-                if repository.user_authentication():
-                    if repository.repo_existence():
-                        member_user = User(member, '')
-                        if member_user.user_existence():
-                            repository.add_contributor(member)
-                            print(f"{member} added to repository {repository.repo_name}")
-                            break
-                            exit(0)
-                        else:
-                            print(f"user {member_user.username} not found")
-                            break
-                            exit(0)
-                    else:
-                        print(f"repository {repository.repo_name} not found for user {repository.username}!")
-                        break
-                        exit(0)
-                else:
-                    print("Authentication Failed !")
-                    break
-                    exit(0)
-        elif choice == '7':
-            username = input("username: ")
-            password = getpass.getpass(f"[git] password for {username}: ")
-            repo_name = input("Enter repository name: ")
-            member = input("username of contributor: ")
-            repository = Repository(repo_name, username, password, group.grp_name)
-            if repository.user_existence():
-                if repository.user_authentication():
-                    if repository.repo_existence():
-                        member_user = User(member, '')
-                        if member_user.user_existence():
-                            repository.remove_contributor(member)
-                            print(f"{member} removed from repository {repository.repo_name}")
-                            break
-                            exit(0)
-                        else:
-                            print(f"user {member_user.username} not found")
-                            break
-                            exit(0)
-                    else:
-                        print(f"repository {repository.repo_name} not found for user {repository.username}!")
-                        break
-                        exit(0)
-                else:
-                    print("Authentication Failed !")
-                    break
-                    exit(0)
-        elif choice == '8': # exit
-            print("Bye!")
-            break
-            exit(0)
-        else:
-            print('Unknown command !')
+    main_socket.listen()
+    try:
+        while True:
+            client, addr = main_socket.accept()
+            print(f"connection from {addr[0]}:{addr[1]}")
+            thread = Thread(target=handler, args=(main_socket, client, addr))
+            thread.setDaemon(True)
+            thread.start()
+    except OSError:
+        print('closed')
+        pass
 
 
 if __name__ == '__main__':

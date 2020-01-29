@@ -12,4 +12,10 @@ Instructions:
 
 then give the permission to execute or run with python.
 
-`python gitconfig.py <your_server_ipaddress>`
+run `gitconfig.py` on your server
+
+`python gitconfig.py`
+
+then run `git_client.py` on your machine:
+
+`python git_client.py <your_server_ip_address>`
