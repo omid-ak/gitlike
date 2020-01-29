@@ -146,60 +146,97 @@ def handler(main_socket, client, addr):
     c_ip = addr[0]
     c_port = addr[1]
 
-    try:
-        while True:
 
-            rec_data = pickle.loads(client.recv(1024))
+    while True:
+        try:
+            rec_data_1 = pickle.loads(client.recv(1024))
 
-            choose_return = choose(choice=rec_data.get('choice'),
-                                   username=rec_data.get('username'),
-                                   password=rec_data.get('password'),
-                                   repo_name=rec_data.get('repo_name', None),
-                                   member=rec_data.get('member', None),
-                                   delete_response=rec_data.get('delete_response', None)
-                                   )
-            response = {
-                        'msg': choose_return
-                        }
-            client.sendall(pickle.dumps(response))
-            if rec_data['choice'] == '8':
+            enrollment_return = enrollment(choice=rec_data_1.get('choice'),
+                                           username=rec_data_1.get('username'),
+                                           password=rec_data_1.get('password'),
+                                           )
+            client.sendall(pickle.dumps(enrollment_return))
+
+            if enrollment_return['continue']:
+
+                while True:
+                    rec_data_2 = pickle.loads(client.recv(1024))
+                    choose_return = choose(choice=rec_data_2.get('choice'),
+                                           username=rec_data_2.get('username'),
+                                           password=rec_data_2.get('password'),
+                                           repo_name=rec_data_2.get('repo_name', None),
+                                           member=rec_data_2.get('member', None),
+                                           delete_response=rec_data_2.get('delete_response', None)
+                                           )
+                    response = {
+                                'msg': choose_return
+                                }
+                    client.sendall(pickle.dumps(response))
+                    if rec_data_2['choice'] == '8':
+                        client.close()
+            else:
+                break
                 client.close()
+        except (OSError, EOFError):
+            pass
 
-    except (OSError, EOFError):
-        pass
-
-
-"""kwargs: {choice:#, username:#, password:#, member:#/emp, repo_name:#/emp}"""
-
-def choose(**kwargs):
-    response_message = None
+def enrollment(**kwargs):
 
     # create shell
     shell = Shell("/bin/git-shell")
     if shell.shell_existence() == False:
         shell.create_shell()
+
     # create group
     group = Group('git_users')
     if group.group_existence() == False:
         group.create_group()
 
-    choice = kwargs['choice']
-    # create user
-    if choice == '1':
-        username = kwargs['username']
-        password = kwargs['password']
-        user = User(username, password)
+    response_message = None
+    CONTINUE = False
+    user = User(kwargs['username'], kwargs['password'])
+    if kwargs['choice'] == '1':
+        if user.user_existence():
+            if user.user_authentication():
+                response_message = "Welcome."
+                CONTINUE = True
+            else:
+                response_message = "Authentication Failed !"
+                CONTINUE = False
+        else:
+            response_message = f"user {user.username} not found"
+            CONTINUE = False
+    if kwargs['choice'] == '2':
         if user.user_existence():
             response_message = "user exists"
-
+            CONTINUE = False
         else:
             user.create_user()
             user.change_shell(shell.sh_name)
             user.add_to_group(group.grp_name)
             response_message = f"user {user.username} created successfully."
+    return {'msg': response_message,'continue': CONTINUE}
 
-    # delete user
-    elif choice == '2':
+
+"""kwargs: {choice:#, username:#, password:#, member:#/emp, repo_name:#/emp}"""
+
+def choose(**kwargs):
+    # create shell
+    shell = Shell("/bin/git-shell")
+    if shell.shell_existence() == False:
+        shell.create_shell()
+
+    # create group
+    group = Group('git_users')
+    if group.group_existence() == False:
+        group.create_group()
+
+    response_message = None
+
+    choice = kwargs['choice']
+
+    # delete account
+    if choice == '1':
         username = kwargs['username']
         password = kwargs['password']
         user = User(username, password)
@@ -221,7 +258,7 @@ def choose(**kwargs):
             response_message = f"user {user.username} not found"
 
     # create repo
-    elif choice == '3':
+    elif choice == '2':
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
@@ -238,7 +275,7 @@ def choose(**kwargs):
                 response_message = "Authentication Failed !"
 
     # delete repo
-    elif choice == '4':
+    elif choice == '3':
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
@@ -261,7 +298,7 @@ def choose(**kwargs):
                 response_message = "Authentication Failed !"
 
     # get repo link
-    elif choice == '5':
+    elif choice == '4':
 
         username = kwargs['username']
         password = kwargs['password']
@@ -277,7 +314,7 @@ def choose(**kwargs):
                 response_message = "Authentication Failed !"
 
     # add member to repo
-    elif choice == '6':
+    elif choice == '5':
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
@@ -299,7 +336,7 @@ def choose(**kwargs):
                 response_message = "Authentication Failed !"
 
     # remove member from repo
-    elif choice == '7':
+    elif choice == '6':
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
