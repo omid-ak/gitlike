@@ -7,6 +7,7 @@ import socket
 import pickle
 import getpass
 from sys import argv
+from time import sleep
 
 def signin():
     print('sign in:\n')
@@ -20,9 +21,9 @@ def signup():
     password = getpass.getpass(f"[git] password for {username}: ")
     return {'username': username, 'password': password}
 
-def menue():
+def menue(user):
     os.system("clear")
-    print('choose :\n'
+    print(f'choose :\t\t\t\tuser:{user}\n'
           
           '1)delete account\n'
           '2)create repo\n'
@@ -30,7 +31,9 @@ def menue():
           '4)get repo link\n'
           '5)add contributor to repo\n'
           '6)remove contributor from repo\n'
-          '7)exit\n'
+          '7)show my repos\n'
+          '8)show repo contributors\n'
+          '9)exit\n'
           )
 
 
@@ -38,12 +41,14 @@ def menue():
 def serilizer(**kwargs):
     return pickle.dumps(kwargs)
 
+
 def main():
     connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ip = argv[1]
     port = 7920
     connection.connect((ip, port))
     while True:
+        sign_response = None
         os.system("clear")
         print("Welcome:\n1)sign in\n2)sign up")
         s = input('choice: ')
@@ -51,18 +56,19 @@ def main():
         if s == '1':
             us = signin()
             connection.sendall(serilizer(choice=s, username=us['username'], password=us['password']))
-            resp = connection.recv(1024)
-            CONTINUE = pickle.loads(resp)['continue']
-            print(pickle.loads(resp)['msg'])
+
+            sign_response = connection.recv(8192)
+            CONTINUE = pickle.loads(sign_response)['continue']
+            print(pickle.loads(sign_response)['msg'])
             break
 
         # sign up
         elif s == '2':
             us = signup()
             connection.sendall(serilizer(choice=s, username=us['username'], password=us['password']))
-            resp = connection.recv(1024)
-            CONTINUE = pickle.loads(resp)['continue']
-            print(pickle.loads(resp)['msg'])
+            sign_response = connection.recv(8192)
+            CONTINUE = pickle.loads(sign_response)['continue']
+            print(pickle.loads(sign_response)['msg'])
             break
 
         else:
@@ -70,30 +76,48 @@ def main():
 
 
     if CONTINUE:
+
+        sleep(2)
         while True:
-            menue()
+            menu_response = None
+            menue(us['username'])
             choice = input('choice: ')
 
             # delete account
             if choice == '1':
-                username = input("username: ")
-                password = getpass.getpass(f"[git] password for {username}: ")
+                username_auth = input("username: ")
+                password_auth = getpass.getpass(f"[git] password for {username_auth}: ")
+                if username_auth == us['username'] and password_auth == us['password']:
+                    dl_ch = input(f"Also all repositories for {username_auth} will be remove\n"
+                                  f"Are you sure you want to delete user {username_auth} ? (y/n): ")
 
-                dl_ch = input(f"Also all repositories for {username} will be remove\n"
-                              f"Are you sure you want to delete user {username} ? (y/n): ")
-
-                connection.sendall(serilizer(choice=choice, username=username, password=password, delete_response=dl_ch))
-                resp = connection.recv(1024)
-                print(pickle.loads(resp)['msg'])
-                break
-                exit(0)
-            elif choice == '2': # create repo
+                    connection.sendall(serilizer(choice=choice,
+                                                 username=username_auth,
+                                                 password=password_auth,
+                                                 delete_response=dl_ch
+                                                 )
+                                       )
+                    menu_response = connection.recv(8192)
+                    print(pickle.loads(menu_response)['msg'])
+                    break
+                    exit(0)
+                else:
+                    print('Authentication failed.\nusername or password not matched!')
+                    break
+                    exit(0)
+            # create repo
+            elif choice == '2':
 
                 repo_name = input("Enter repository name: ")
 
-                connection.sendall(serilizer(choice=choice, username=us['username'], password=us['password'], repo_name=repo_name))
-                resp = connection.recv(1024)
-                print(pickle.loads(resp)['msg'])
+                connection.sendall(serilizer(choice=choice,
+                                             username=us['username'],
+                                             password=us['password'],
+                                             repo_name=repo_name
+                                             )
+                                   )
+                menu_response = connection.recv(8192)
+                print(pickle.loads(menu_response)['msg'])
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
                     continue
@@ -120,8 +144,8 @@ def main():
                                              delete_response=dl_ch
                                              )
                                    )
-                resp = connection.recv(1024)
-                print(pickle.loads(resp)['msg'])
+                menu_response = connection.recv(8192)
+                print(pickle.loads(menu_response)['msg'])
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
                     continue
@@ -140,9 +164,14 @@ def main():
 
                 repo_name = input("Enter repository name: ")
 
-                connection.sendall(serilizer(choice=choice, username=us['username'], password=us['password'], repo_name=repo_name))
-                resp = connection.recv(1024)
-                print(pickle.loads(resp)['msg'])
+                connection.sendall(serilizer(choice=choice,
+                                             username=us['username'],
+                                             password=us['password'],
+                                             repo_name=repo_name
+                                             )
+                                   )
+                menu_response = connection.recv(8192)
+                print(pickle.loads(menu_response)['msg'])
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
                     continue
@@ -168,8 +197,8 @@ def main():
                                              member=member
                                              )
                                    )
-                resp = connection.recv(1024)
-                print(pickle.loads(resp)['msg'])
+                menu_response = connection.recv(8192)
+                print(pickle.loads(menu_response)['msg'])
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
                     continue
@@ -193,8 +222,67 @@ def main():
                                              member=member
                                              )
                                    )
-                resp = connection.recv(1024)
-                print(pickle.loads(resp)['msg'])
+                menu_response = connection.recv(8192)
+                print(pickle.loads(menu_response)['msg'])
+                c = input("Do you have any other request? (y/n): ")
+                if c == 'y':
+                    continue
+                elif c == 'n':
+                    print('Bye!')
+                    break
+                    exit(0)
+                else:
+                    print("Unknown command!")
+                    break
+                    exit(0)
+
+            # show my repos
+            elif choice == '7':
+                connection.sendall(serilizer(choice=choice,
+                                             username=us['username'],
+                                             password=us['password']
+                                             )
+                                   )
+                menu_response = connection.recv(8192)
+                repos = pickle.loads(menu_response)['msg']
+                if ',' in repos:
+                    for repo in repos.split(','):
+                        print(repo)
+                else:
+                    print(repos)
+
+                c = input("Do you have any other request? (y/n): ")
+                if c == 'y':
+                    continue
+                elif c == 'n':
+                    print('Bye!')
+                    break
+                    exit(0)
+                else:
+                    print("Unknown command!")
+                    break
+                    exit(0)
+
+            # show repo contributors
+            elif choice == '8':
+
+                repo_name = input("Enter repository name: ")
+
+                connection.sendall(serilizer(choice=choice,
+                                             username=us['username'],
+                                             password=us['password'],
+                                             repo_name=repo_name
+                                             )
+                                   )
+                menu_response = connection.recv(8192)
+                desr = pickle.loads(menu_response)
+                contrbs = desr['msg']
+                if ',' in contrbs:
+                    for con in contrbs.split(','):
+                        print(con)
+                else:
+                    print(contrbs)
+
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
                     continue
@@ -207,7 +295,7 @@ def main():
                     break
                     exit(0)
             # exit
-            elif choice == '7':
+            elif choice == '9':
                 print("Bye!")
                 break
                 exit(0)
