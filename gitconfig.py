@@ -167,7 +167,7 @@ class Repository(User, Group):
         try:
             os.remove(f"/repositories/{self.username}/contributors/{self.repo_name}.txt/")
         except :
-            print(f"contributors file for repo {self.repo_name} not found for user {p}")
+            print(f"contributors file for repo {self.repo_name} not found for user {self.username}")
             pass
         try:
             shutil.rmtree(self.repo_path)
@@ -274,37 +274,44 @@ def handler(main_socket, client, addr):
 
     while True:
         try:
-            rec_data_1 = pickle.loads(client.recv(8192))
-
-            enrollment_return = enrollment(choice=rec_data_1.get('choice'),
-                                           username=rec_data_1.get('username'),
-                                           password=rec_data_1.get('password'),
-                                           )
-            client.sendall(pickle.dumps(enrollment_return))
-
-            if enrollment_return['continue']:
-
-                while True:
-                    choose_return = None
-                    response = None
-                    rec_data_2 = pickle.loads(client.recv(8192))
-                    if rec_data_2['choice'] == '9':
-                        client.close()
-                    else:
-                        choose_return = choose(choice=rec_data_2.get('choice'),
-                                               username=rec_data_2.get('username'),
-                                               password=rec_data_2.get('password'),
-                                               repo_name=rec_data_2.get('repo_name', None),
-                                               member=rec_data_2.get('member', None),
-                                               delete_response=rec_data_2.get('delete_response', None)
+            enroll_recv_data = client.recv(8192)
+            try:
+                rec_data_1 = pickle.loads(enroll_recv_data)
+                enrollment_return = enrollment(choice=rec_data_1.get('choice'),
+                                               username=rec_data_1.get('username'),
+                                               password=rec_data_1.get('password'),
                                                )
-                        print(choose_return)
-                        response = {
-                                    'msg': choose_return
-                                    }
-                        client.sendall(pickle.dumps(response))
-            else:
-                break
+                client.sendall(pickle.dumps(enrollment_return))
+
+                if enrollment_return['continue']:
+
+                    while True:
+                        choose_return = None
+                        response = None
+                        menu_rec_data = client.recv(8192)
+                        try:
+                            rec_data_2 = pickle.loads(menu_rec_data)
+                            if rec_data_2['choice'] == '9':
+                                client.close()
+                            else:
+                                choose_return = choose(choice=rec_data_2.get('choice'),
+                                                       username=rec_data_2.get('username'),
+                                                       password=rec_data_2.get('password'),
+                                                       repo_name=rec_data_2.get('repo_name', None),
+                                                       member=rec_data_2.get('member', None),
+                                                       delete_response=rec_data_2.get('delete_response', None)
+                                                       )
+                                print(choose_return)
+                                response = {
+                                            'msg': choose_return
+                                            }
+                                client.sendall(pickle.dumps(response))
+                        except:
+                            client.close()
+                else:
+                    break
+                    client.close()
+            except:
                 client.close()
         except (OSError, EOFError):
             pass
