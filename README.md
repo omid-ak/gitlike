@@ -1,6 +1,6 @@
 # git-server-config
 
-**mirroring git vcs on a server**
+**configuring a git vcs on a server**
 
 Instructions:
 
