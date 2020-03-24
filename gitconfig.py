@@ -538,7 +538,7 @@ def main():
     if os.path.exists("/repositories") == False:
         os.mkdir("/repositories")
     main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+    print("installation or checking Done.")
     # connection
     ip = '0.0.0.0'
     port = 7920
