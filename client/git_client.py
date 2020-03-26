@@ -8,6 +8,7 @@ import pickle
 import getpass
 from sys import argv
 from time import sleep
+from pyfiglet import Figlet 
 
 def signin():
     print('sign in:\n')
@@ -21,22 +22,26 @@ def signup():
     password = getpass.getpass(f"[git] password for {username}: ")
     return {'username': username, 'password': password}
 
-def menue(user):
+def menue(user, company_name):
     os.system("clear")
+    print(greeting(company_name))
     print(f'choose :\t\t\t\tuser:{user}\n'
           
-          '1)delete account\n'
-          '2)create repo\n'
-          '3)delete repo\n'
-          '4)get repo link\n'
-          '5)add contributor to repo\n'
-          '6)remove contributor from repo\n'
-          '7)show my repos\n'
-          '8)show repo contributors\n'
-          '9)exit\n'
+          '1-delete account\n'
+          '2-create repository\n'
+          '3-delete repository\n'
+          '4-get repository link\n'
+          '5-add contributor to repository\n'
+          '6-remove contributor from repository\n'
+          '7-show my repositories\n'
+          '8-show repository contributors\n'
+          '9-exit\n'
           )
 
 
+def greeting(company_name):
+    f = Figlet(font='standard')
+    return f.renderText(company_name)
 
 def serilizer(**kwargs):
     return pickle.dumps(kwargs)
@@ -48,8 +53,11 @@ def main():
     port = 7920
     connection.connect((ip, port))
     while True:
+        company_name = pickle.loads(connection.recv(8192))["company_name"]
+        print(f"this is company name: {company_name}")
         sign_response = None
         os.system("clear")
+        print(greeting(company_name))
         print("Welcome:\n1)sign in\n2)sign up")
         s = input('choice: ')
         # sign in
@@ -80,7 +88,7 @@ def main():
         sleep(2)
         while True:
             menu_response = None
-            menue(us['username'])
+            menue(us['username'], company_name)
             choice = input('choice: ')
 
             # delete account

@@ -1,21 +1,22 @@
 # git-server-config
 
-**configuring a git vcs on a server**
+**configuring a git vcs on a server and use from client**
 
 Instructions:
 
-`python3 -m venv venv`
+Server:<br>
 
-`source venv/bin/activate`
+***Notice that run main.py in server only eith root user!***<br>
 
-`pip install -r requirements.txt`
+`sudo su`<br>
+`python3 -m venv venv`<br>
+`source venv/bin/activate`<br>
+`pip install -r server/server_requirements.txt`<br>
+`python server/main.py`
 
-then give the permission to execute or run with python.
+Client:<br>
 
-run `gitconfig.py` on your server
-
-`python gitconfig.py`
-
-then run `git_client.py` on your machine:
-
+`python3 -m venv venv`<br>
+`source venv/bin/activate`<br>
+`pip install -r client/client_requirements.txt`<br>
 `python git_client.py <your_server_ip_address>`
