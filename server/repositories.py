@@ -12,7 +12,8 @@ from baseconf import Config, Group
 import os
 import pwd
 import grp
-
+import re
+import shutil
 
 class Repository(User, Group, Config):
     def __init__(self, repo_name, username, password, group_name):
@@ -30,9 +31,14 @@ class Repository(User, Group, Config):
         self.repo_path = f"/repositories/{self.username}/{self.repo_name}.git"
         self.repo_link = f"ssh://{self.username}@{self.IP}:{self.PORT}{self.repo_path}"
 
-
     def repo_existence(self):
         if os.path.exists(self.repo_path) is True:
+            return True
+        else:
+            return False
+
+    def repo_name_validation(self):
+        if re.match("^[a-zA-Z0-9_-]+$", self.repo_name):
             return True
         else:
             return False

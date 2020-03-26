@@ -25,12 +25,14 @@ class Shell:
 
     def shell_existence(self):
         if os.path.exists(self.sh_name):
-            self.shell_existence =  True
+            self.shell_existence_status = True
         else:
-            self.shell_existence =  False
+            self.shell_existence_status = False
+
     def create_shell(self):
-        if  self.shell_existence_status is False:
+        if self.shell_existence_status is False:
             os.system(f"echo {self.sh_name} >> /etc/shells")
+
 
 class Group:
 
@@ -50,7 +52,7 @@ class Group:
             os.system(f"groupadd {self.grp_name}")
 
 
-class Config():
+class Config:
     def __init__(self):
 
         self.IP                                 = None
@@ -65,7 +67,8 @@ class Config():
         self.init_repo_dir()
         self.init_shell()
         self.init_group()
-    
+        self.dependencies_installation_check()
+
     def init_repo_dir(self):
         if os.path.exists("/repositories") is False:
             os.mkdir("/repositories")
@@ -87,16 +90,19 @@ class Config():
     
     def dependencies_installation_check(self):
         if os.path.exists("/usr/bin/git") is True:
-            self.git_installation_status  = True
+            self.dependencies_installation_status  = True
         else:
-            self.git_installation_status  = False
+            self.dependencies_installation_status  = False
 
     def install_dependencies(self):
-        if self.git_installation_check() is False:
+        if self.dependencies_installation_status is False:
             if self.distro_type.name is Distro_Type.REDHAT.name:
                 os.system('yum update -y && yum install git -y')
             if self.distro_type.name is Distro_Type.DEBIAN.name:
                 os.system('apt update -y && apt install git -y')
+
+    def firewall_conf(self):
+        pass
 
     def detect_distro_type(self):
         distro_found = platform.linux_distribution()[0]

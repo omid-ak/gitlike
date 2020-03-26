@@ -132,12 +132,15 @@ def choose(**kwargs):
         password = kwargs['password']
         repo_name = kwargs['repo_name']
         repository = Repository(repo_name, username, password, config.group_name)
-        if repository.repo_existence() is True:
-            response_message = f"repository already exists\nclone or remote with ssh: {repository.repo_link}"
-        else:
-            repository.create_repository()
-            response_message = f"repository created successfully.\nclone or remote with ssh: {repository.repo_link}"
 
+        if repository.repo_name_validation() is True:
+            if repository.repo_existence() is True:
+                response_message = f"repository already exists\nclone or remote with ssh: {repository.repo_link}"
+            else:
+                repository.create_repository()
+                response_message = f"repository created successfully.\nclone or remote with ssh: {repository.repo_link}"
+        else:
+            response_message = f"username {repository.repo_name} is invalid only (words, digits, - , _) is valid"
 
     # delete repo
     elif choice == '3':
