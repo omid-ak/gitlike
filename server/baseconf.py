@@ -1,7 +1,7 @@
 """
 v1.0
 
-Basic configuration for git server Deployment
+Basic configuration of Server Side part of GitLike Project.
 
 """
 _author = 'omid'
@@ -43,9 +43,9 @@ class Group:
 
     def group_existence(self):
         if self.grp_name in [entry.gr_name for entry in grp.getgrall()]:
-            self.grp_existence_status =  True
+            self.grp_existence_status = True
         else:
-            self.grp_existence_status =  False
+            self.grp_existence_status = False
     
     def create_group(self):
         if self.grp_existence_status is False:

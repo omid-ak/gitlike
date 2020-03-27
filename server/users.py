@@ -1,9 +1,10 @@
 """
 v1.0
 
-Users controlling part
+Users controlling of Server Side part of GitLike Project.
 
 """
+
 _author = "omid"
 
 import pam

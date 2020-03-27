@@ -1,4 +1,12 @@
-""" this is the git client """
+"""
+v1.0
+
+This Is The git client of `GITLIKE` Project Written By  Omid Akhgary
+If You Want To Contact With Me:
+Email: omid7798@gmail.com
+License: GPL3
+
+"""
 
 _author = "omid"
 
@@ -9,6 +17,7 @@ import getpass
 from sys import argv
 from time import sleep
 from pyfiglet import Figlet 
+from termcolor import colored
 
 def signin():
     print('sign in:\n')
@@ -22,10 +31,11 @@ def signup():
     password = getpass.getpass(f"[git] password for {username}: ")
     return {'username': username, 'password': password}
 
-def menue(user, company_name):
+def menu(user, company_name):
+    username_colorful = colored(user, 'cyan')
     os.system("clear")
     print(greeting(company_name))
-    print(f'choose :\t\t\t\tuser:{user}\n'
+    print(f'choose :\t\t\t\tuser:{username_colorful}\n'
           
           '1-delete account\n'
           '2-create repository\n'
@@ -41,7 +51,7 @@ def menue(user, company_name):
 
 def greeting(company_name):
     f = Figlet(font='standard')
-    return f.renderText(company_name)
+    return colored(f.renderText(company_name), "green")
 
 def serilizer(**kwargs):
     return pickle.dumps(kwargs)
@@ -64,23 +74,22 @@ def main():
         if s == '1':
             us = signin()
             connection.sendall(serilizer(choice=s, username=us['username'], password=us['password']))
-
-            sign_response = connection.recv(8192)
-            CONTINUE = pickle.loads(sign_response)['continue']
-            print(pickle.loads(sign_response)['msg'])
+            sign_response   = pickle.loads(connection.recv(8192))
+            CONTINUE        = sign_response['continue']
+            print(colored(sign_response['msg'], sign_response['color']))
             break
 
         # sign up
         elif s == '2':
             us = signup()
             connection.sendall(serilizer(choice=s, username=us['username'], password=us['password']))
-            sign_response = connection.recv(8192)
-            CONTINUE = pickle.loads(sign_response)['continue']
-            print(pickle.loads(sign_response)['msg'])
+            sign_response   = pickle.loads(connection.recv(8192))
+            CONTINUE        = sign_response['continue']
+            print(colored(sign_response['msg'], sign_response['color']))
             break
 
         else:
-            print('Unknown command!')
+            print(colored('Unknown command!', 'red'))
 
 
     if CONTINUE:
@@ -88,7 +97,7 @@ def main():
         sleep(2)
         while True:
             menu_response = None
-            menue(us['username'], company_name)
+            menu(us['username'], company_name)
             choice = input('choice: ')
 
             # delete account
@@ -105,12 +114,12 @@ def main():
                                                  delete_response=dl_ch
                                                  )
                                        )
-                    menu_response = connection.recv(8192)
-                    print(pickle.loads(menu_response)['msg'])
+                    menu_response = pickle.loads(connection.recv(8192))
+                    print(colored(menu_response['msg'], menu_response['color']))
                     break
                     exit(0)
                 else:
-                    print('Authentication failed.\nusername or password not matched!')
+                    print(colored('Authentication failed.\nusername or password not matched!', 'red'))
                     break
                     exit(0)
             # create repo
@@ -124,8 +133,14 @@ def main():
                                              repo_name=repo_name
                                              )
                                    )
-                menu_response = connection.recv(8192)
-                print(pickle.loads(menu_response)['msg'])
+                menu_response   = pickle.loads(connection.recv(8192))
+                resp_msg        = menu_response['msg'].get('resp_msg', None)
+                link            = menu_response['msg'].get('link', None)
+                if resp_msg is not None and link is not None:
+                    print(colored(resp_msg, menu_response['color']), colored(link, 'blue'))
+                else:
+                    print(colored(menu_response['msg'], menu_response['color']))
+
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
                     continue
@@ -134,7 +149,7 @@ def main():
                     break
                     exit(0)
                 else:
-                    print("Unknown command!")
+                    print(colored("Unknown command!"), 'red')
                     break
                     exit(0)
 
@@ -143,7 +158,7 @@ def main():
 
                 repo_name = input("Enter repository name: ")
 
-                dl_ch = input(f"Are you sure you want delete repository {repo_name}? (y/n): ")
+                dl_ch = input(colored(f"Are you sure you want delete repository {repo_name}? (y/n): ", 'yellow'))
 
                 connection.sendall(serilizer(choice=choice,
                                              username=us['username'],
@@ -152,8 +167,8 @@ def main():
                                              delete_response=dl_ch
                                              )
                                    )
-                menu_response = connection.recv(8192)
-                print(pickle.loads(menu_response)['msg'])
+                menu_response = pickle.loads(connection.recv(8192))
+                print(colored(menu_response['msg'], menu_response['color']))
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
                     continue
@@ -162,7 +177,7 @@ def main():
                     break
                     exit(0)
                 else:
-                    print("Unknown command!")
+                    print(colored("Unknown command!"), 'red')
                     break
                     exit(0)
 
@@ -178,8 +193,13 @@ def main():
                                              repo_name=repo_name
                                              )
                                    )
-                menu_response = connection.recv(8192)
-                print(pickle.loads(menu_response)['msg'])
+                menu_response = pickle.loads(connection.recv(8192))
+                resp_msg = menu_response['msg'].get('resp_msg', None)
+                link = menu_response['msg'].get('link', None)
+                if resp_msg is not None and link is not None:
+                    print(colored(resp_msg, menu_response['color']), colored(link, 'blue'))
+                else:
+                    print(colored(menu_response['msg'], menu_response['color']))
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
                     continue
@@ -188,7 +208,7 @@ def main():
                     break
                     exit(0)
                 else:
-                    print("Unknown command!")
+                    print(colored("Unknown command!"), 'red')
                     break
                     exit(0)
 
@@ -205,8 +225,8 @@ def main():
                                              member=member
                                              )
                                    )
-                menu_response = connection.recv(8192)
-                print(pickle.loads(menu_response)['msg'])
+                menu_response = pickle.loads(connection.recv(8192))
+                print(colored(menu_response['msg']), menu_response['color'])
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
                     continue
@@ -215,13 +235,14 @@ def main():
                     break
                     exit(0)
                 else:
-                    print("Unknown command!")
+                    print(colored("Unknown command!"), 'red')
                     break
                     exit(0)
+
             # remove member from repo
             elif choice == '6':
-                repo_name = input("Enter repository name: ")
-                member = input("username of contributor: ")
+                repo_name   = input("Enter repository name: ")
+                member      = input("username of contributor: ")
 
                 connection.sendall(serilizer(choice=choice,
                                              username=us['username'],
@@ -230,8 +251,8 @@ def main():
                                              member=member
                                              )
                                    )
-                menu_response = connection.recv(8192)
-                print(pickle.loads(menu_response)['msg'])
+                menu_response = pickle.loads(connection.recv(8192))
+                print(colored(menu_response['msg']), menu_response['color'])
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
                     continue
@@ -240,7 +261,7 @@ def main():
                     break
                     exit(0)
                 else:
-                    print("Unknown command!")
+                    print(colored("Unknown command!"), 'red')
                     break
                     exit(0)
 
@@ -251,13 +272,13 @@ def main():
                                              password=us['password']
                                              )
                                    )
-                menu_response = connection.recv(8192)
-                repos = pickle.loads(menu_response)['msg']
+                menu_response = pickle.loads(connection.recv(8192))
+                repos_resp = menu_response['msg']
                 if ',' in repos:
-                    for repo in repos.split(','):
-                        print(repo)
+                    for repo in repos_resp.split(','):
+                        print(colored(repo, menu_response['color']))
                 else:
-                    print(repos)
+                    print(colored(repos_resp, menu_response['color']))
 
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
@@ -267,7 +288,7 @@ def main():
                     break
                     exit(0)
                 else:
-                    print("Unknown command!")
+                    print(colored("Unknown command!"), 'red')
                     break
                     exit(0)
 
@@ -282,14 +303,13 @@ def main():
                                              repo_name=repo_name
                                              )
                                    )
-                menu_response = connection.recv(8192)
-                desr = pickle.loads(menu_response)
-                contrbs = desr['msg']
+                menu_response = pickle.loads(connection.recv(8192))
+                contrbs = menu_response['msg']
                 if ',' in contrbs:
                     for con in contrbs.split(','):
-                        print(con)
+                        print(colored(con, menu_response['color']))
                 else:
-                    print(contrbs)
+                    print(colored(contrbs, menu_response['color']))
 
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
@@ -299,7 +319,7 @@ def main():
                     break
                     exit(0)
                 else:
-                    print("Unknown command!")
+                    print(colored("Unknown command!"), 'red')
                     break
                     exit(0)
             # exit
@@ -308,7 +328,7 @@ def main():
                 break
                 exit(0)
             else:
-                print('Unknown command !')
+                print(colored("Unknown command!"), 'red')
                 break
                 exit(0)
     else:
