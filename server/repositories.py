@@ -1,7 +1,7 @@
 """
 v1.0
 
-Repository management part
+Repository management of Server Side part of GitLike Project.
 
 """
 

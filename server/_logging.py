@@ -245,7 +245,7 @@ class Logger():
             self.log_message = kwargs.get('log_msg', f"from {self.ip}:{self.port} received {self.log_data}")
         if self.log_type is Log_Type.SENT_DATA:
             self.log_message = kwargs.get('log_msg', f"data sent {self.log_data} to {self.ip}:{self.port}")
-        if self.log_data is Log_Type.RUNTIME_ACTIONS:
+        if self.log_type is Log_Type.RUNTIME_ACTIONS:
             self.username       = kwargs.get("username", None)
             self.log_message    = kwargs.get("log_msg", None)
 
