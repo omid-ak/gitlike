@@ -55,8 +55,9 @@ class Group:
 class Config:
     def __init__(self):
 
-        self.IP                                 = None
-        self.PORT                               = 22
+        self.ip                                 = None
+        self.git_port                           = 22
+        self.server_port                        = 7920
         self.company_name                       = None
         self.distro_type                        = None
         self.dependencies_installation_status   = None
@@ -68,6 +69,7 @@ class Config:
         self.init_shell()
         self.init_group()
         self.dependencies_installation_check()
+        self.firewall_conf()
 
     def init_repo_dir(self):
         if os.path.exists("/repositories") is False:
@@ -102,7 +104,9 @@ class Config:
                 os.system('apt update -y && apt install git -y')
 
     def firewall_conf(self):
-        pass
+        """ Openning 7920 port if rule not exists for received connections """
+        if not [f"$(cat /sbin/iptables --list | grep -- {self.server_port})"]:
+            os.system(f"iptables -A INPUT -p tcp --sport {self.server_port} -j ACCEPT")
 
     def detect_distro_type(self):
         distro_found = platform.linux_distribution()[0]
