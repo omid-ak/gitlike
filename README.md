@@ -6,7 +6,7 @@ Instructions:
 
 Server:<br>
 
-***Notice that run main.py in server only eith root user!***<br>
+***Notice that run main.py in server only with root user!***<br>
 
 `sudo su`<br>
 `python3 -m venv venv`<br>
