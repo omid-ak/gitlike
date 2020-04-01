@@ -19,8 +19,9 @@ import crypt
 import shutil
 import re
 
-class User:
+class User():
     def __init__(self, username, password):
+
         self.username   = username
         if isinstance(password, list):
             self.passwords  = password
@@ -89,7 +90,7 @@ class User:
         os.system(f"usermod --shell {shell} {self.username}")
 
     def add_to_group(self, group_name):
-        os.system(f"usermod -aG {group_name} {self.username}")
+        os.system(f"usermod -g {group_name} {self.username}")
 
     def show_repos(self):
         self.all_repos.clear()

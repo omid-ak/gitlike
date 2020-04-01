@@ -27,6 +27,7 @@ class Repository(User, Group, Config):
         Config.__init__(self)
         self.repo_link = None
         self.repo_path = None
+        self.home_user_repo_path = None
         self.repo_contributors_db = None
         self.get_repo_link_and_path_and_contributors_db()
         self.contributors = dict()
@@ -35,6 +36,7 @@ class Repository(User, Group, Config):
     def get_repo_link_and_path_and_contributors_db(self):
         self.repo_contributors_db = f"/repositories/{self.username}/contributors/{self.repo_name}.json"
         self.repo_path = f"/repositories/{self.username}/{self.repo_name}.git"
+        self.home_user_repo_path = f"/home/{self.username}/{self.repo_name}.git"
         self.repo_link = f"ssh://{self.username}@{self.ip}:{self.git_port}{self.repo_path}"
 
     def repo_existence(self):
@@ -56,8 +58,9 @@ class Repository(User, Group, Config):
         os.chdir(self.repo_path)
         os.system("git init --bare --share=group")
         os.system(f"chgrp -R {self.group_name} .")
-        os.system(f"ln -s {self.repo_path} /home/{self.username}")
-        os.chown(f"/home/{self.username}/", pwd.getpwnam(self.username).pw_uid, grp.getgrnam(self.group_name).gr_gid)
+        os.makedirs(self.home_user_repo_path)
+        os.system(f"ln -s {self.repo_path} /home/{self.username}/{self.repo_name}.git")
+        os.system(f"chown -R {self.username}:{self.group_name} /home/{self.username}/{self.repo_name}.git")
         self.show_repos()
 
     def delete_repository(self):
