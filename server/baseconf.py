@@ -14,6 +14,7 @@ import platform
 import socket
 import os
 import grp
+import subprocess
 
 """define multiple distribution and OS"""
 
@@ -108,9 +109,19 @@ class Config:
             if self.distro_type.name is Distro_Type.DEBIAN.name:
                 os.system('apt update -y && apt install git -y')
 
+    def firewall_check(self):
+        try:
+            res = subprocess.check_output(f"iptables -nL | grep 'tcp spt:{self.server_port}'", shell=True)
+            if res:
+                return True
+            else:
+                return False
+        except subprocess.CalledProcessError:
+            return False
+
     def firewall_conf(self):
         """ Openning 7920 port if rule not exists for received connections """
-        if not [f"$(cat /sbin/iptables --list | grep -- {self.server_port})"]:
+        if self.firewall_check() is False:
             os.system(f"iptables -A INPUT -p tcp --sport {self.server_port} -j ACCEPT")
 
     def detect_distro_type(self):
