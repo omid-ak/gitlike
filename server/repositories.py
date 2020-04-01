@@ -60,7 +60,7 @@ class Repository(User, Group, Config):
         os.system(f"chgrp -R {self.group_name} .")
         os.makedirs(self.home_user_repo_path)
         os.system(f"ln -s {self.repo_path} /home/{self.username}/{self.repo_name}.git")
-        os.system(f"chown -R {self.username}:{self.group_name} /home/{self.username}/{self.repo_name}.git")
+        os.system(f"chown -R {self.username}:{self.group_name} {self.home_user_repo_path}")
         self.show_repos()
 
     def delete_repository(self):
@@ -101,6 +101,12 @@ class Repository(User, Group, Config):
         try:
             os.system(f"ln -s {self.repo_path} /repositories/{member}/{self.repo_name}.git")
             os.system(f"ln -s {self.repo_contributors_db} /repositories/{member}/contributors/{self.repo_name}.json")
+
+            os.makedirs(self.home_user_repo_path)
+            os.system(f"ln -s {self.repo_path} /home/{member}/{self.repo_name}.git")
+            os.system(f"chown -R {member}:{self.group_name} /home/{member}/{self.repo_name}")
+ 
+
         except:
             print(f"directory for user {member} not found!")
             pass
