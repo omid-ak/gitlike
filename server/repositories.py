@@ -58,7 +58,10 @@ class Repository(User, Group, Config):
         os.chdir(self.repo_path)
         os.system("git init --bare --share=group")
         os.system(f"chgrp -R {self.group_name} .")
+<<<<<<< HEAD
         os.makedirs(self.home_user_repo_path)
+=======
+>>>>>>> 5cf9018e03f0d8bb66de0a0bc136c6393e36e4ba
         os.system(f"ln -s {self.repo_path} /home/{self.username}/{self.repo_name}.git")
         os.system(f"chown -R {self.username}:{self.group_name} /home/{self.username}/{self.repo_name}.git")
         self.show_repos()
