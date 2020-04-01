@@ -17,7 +17,6 @@ from baseconf import Config
 from users import User
 from repositories import Repository
 from _logging import Logger, Log_Type
-
 from enum import Enum
 import socket
 from threading import Thread
@@ -124,6 +123,8 @@ def handler(main_socket, client, addr):
     global c_ip, c_port
     c_ip    = addr[0]
     c_port  = addr[1]
+
+    logger.main_logger(log_type=Log_Type.CONNECTION_RECEIVED, ip=c_ip, port=c_port, stage=Stages.PRE_ENROLLMENT.value)
 
     logger.main_logger(log_type=Log_Type.CONNECTION_RECEIVED, ip=c_ip, port=c_port, stage=Stages.PRE_ENROLLMENT.value)
 
@@ -445,7 +446,6 @@ def choose(**kwargs):
         else:
             response_message = f"repository {repository.repo_name} not found for user {repository.username}!"
             color            = Text_Color.ERROR.value
-
     # get repo link
     elif choice == '4':
         username = kwargs['username']
@@ -568,7 +568,6 @@ def choose(**kwargs):
 
 def main():
     logger.main_logger(log_type=Log_Type.START)
-
     # Base config
     print('initializing...')
     config.company_name = input("Entenr Your Company Name: ")

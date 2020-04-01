@@ -33,7 +33,6 @@ def signup():
     password = getpass.getpass(f"[git] password for {username}: ")
     return {'username': username, 'password': password}
 
-
 def menu(user, company_name):
     username_colorful = colored(user, 'cyan')
     os.system("clear")

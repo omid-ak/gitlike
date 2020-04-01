@@ -1,8 +1,13 @@
 """
 v1.0
+GiLike Project
+Copyleft (C) 2020 GitLike. All Rights Reserved.
+Licence: GPL3
+Email: omid7798@gmail.com
+"""
 
+"""
 Users controlling of Server Side part of GitLike Project.
-
 """
 
 _author = "omid"
