@@ -56,8 +56,8 @@ class Repository(User, Group, Config):
         os.chdir(self.repo_path)
         os.system("git init --bare --share=group")
         os.system(f"chgrp -R {self.group_name} .")
-        os.system(f"ln -s {self.repo_path} /home/{self.username}")
-        os.chown(f"/home/{self.username}/", pwd.getpwnam(self.username).pw_uid, grp.getgrnam(self.group_name).gr_gid)
+        os.system(f"ln -s {self.repo_path} /home/{self.username}/{self.repo_name}.git")
+        os.system(f"chown -R {self.username}:{self.group_name} /home/{self.username}/{self.repo_name}.git")
         self.show_repos()
 
     def delete_repository(self):
