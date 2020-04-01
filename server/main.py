@@ -51,7 +51,8 @@ class Stages(Enum):
 # Enrollment Menu Variant Stages
 Enrollment_Stages = {
                         "1": "sign_in",
-                        "2": "sign_up"
+                        "2": "sign_up",
+                        "3": "exit"
                     }
 
 # Main Menu(Post Enrollment Menu) Variant Stages.
@@ -87,7 +88,7 @@ check for sign in or sign up in this format:
 received data format;
 
  {
-    'choice'    : '1'/'2' --> Enrollment Stages
+    'choice'    : '1'/'2'/'3' --> Enrollment Stages
     'username'  : #
     'password'  : #
  }
@@ -126,8 +127,6 @@ def handler(main_socket, client, addr):
 
     logger.main_logger(log_type=Log_Type.CONNECTION_RECEIVED, ip=c_ip, port=c_port, stage=Stages.PRE_ENROLLMENT.value)
 
-    logger.main_logger(log_type=Log_Type.CONNECTION_RECEIVED, ip=c_ip, port=c_port, stage=Stages.PRE_ENROLLMENT.value)
-
     while True:
         # controlling Unknown data
         try:
@@ -156,11 +155,26 @@ def handler(main_socket, client, addr):
                                     stage=Stages.ENROLLMENT.value
                                     )
 
+                if rec_data_1["choice"] == '3':
+                    logger.main_logger(
+                        log_type=Log_Type.RUNTIME_ACTIONS,
+                        ip=c_ip,
+                        port=c_port,
+                        stage=Stages.ENROLLMENT.value,
+                        action=Enrollment_Stages.get(rec_data_1.get('choice')),
+                        log_msg="App Terminated"
+                    )
+
+                    client.close()
+                    break
+
                 enrollment_return = enrollment(
                                                 choice=rec_data_1.get('choice'),
                                                 username=rec_data_1.get('username'),
                                                 password=rec_data_1.get('password'),
                                                )
+
+
 
                 client.sendall(serializer(**enrollment_return))
 
@@ -199,7 +213,7 @@ def handler(main_socket, client, addr):
                                 data=rec_data_2,
                                 stage=Stages.POST_ENROLLMENT.value
                             )
-
+                            # exit in stage enrollment
                             if rec_data_2['choice'] == '9':
 
                                 logger.main_logger(
@@ -215,43 +229,42 @@ def handler(main_socket, client, addr):
                                 client.close()
                                 break
 
-                            else:
-                                choose_return = choose(
-                                    choice=rec_data_2.get('choice'),
-                                    username=rec_data_2.get('username'),
-                                    password=rec_data_2.get('password'),
-                                    repo_name=rec_data_2.get('repo_name', None),
-                                    member=rec_data_2.get('member', None),
-                                    delete_response=rec_data_2.get('delete_response', None)
-                                )
+                            choose_return = choose(
+                                choice=rec_data_2.get('choice'),
+                                username=rec_data_2.get('username'),
+                                password=rec_data_2.get('password'),
+                                repo_name=rec_data_2.get('repo_name', None),
+                                member=rec_data_2.get('member', None),
+                                delete_response=rec_data_2.get('delete_response', None)
+                            )
 
-                                logger.main_logger(
-                                                    log_type=Log_Type.RUNTIME_ACTIONS,
-                                                    ip=c_ip,
-                                                    port=c_port,
-                                                    stage=Stages.POST_ENROLLMENT.value,
-                                                    action=Post_Enrollment_stages.get(rec_data_2.get('choice')),
-                                                    username=rec_data_2.get('username'),
-                                                    log_msg=choose_return.get('msg')
-                                                    )
+                            logger.main_logger(
+                                                log_type=Log_Type.RUNTIME_ACTIONS,
+                                                ip=c_ip,
+                                                port=c_port,
+                                                stage=Stages.POST_ENROLLMENT.value,
+                                                action=Post_Enrollment_stages.get(rec_data_2.get('choice')),
+                                                username=rec_data_2.get('username'),
+                                                log_msg=choose_return.get('msg')
+                                                )
 
-                                response = {
-                                            'msg'   : choose_return['msg'],
-                                            'color' : choose_return['color']
-                                            }
+                            response = {
+                                        'msg'   : choose_return['msg'],
+                                        'color' : choose_return['color']
+                                        }
 
-                                logger.main_logger(
-                                                    log_type=Log_Type.SENT_DATA,
-                                                    ip=c_ip,
-                                                    port=c_port,
-                                                    data=response,
-                                                    stage=Stages.POST_ENROLLMENT.value
-                                                    )
+                            logger.main_logger(
+                                                log_type=Log_Type.SENT_DATA,
+                                                ip=c_ip,
+                                                port=c_port,
+                                                data=response,
+                                                stage=Stages.POST_ENROLLMENT.value
+                                                )
 
-                                client.send(serializer(**response))
-                                if rec_data_2['choice'] == '8':
-                                    client.close()
-                                    break
+                            client.send(serializer(**response))
+                            if rec_data_2['choice'] == '8':
+                                client.close()
+                                break
 
                         except Exception:
 
@@ -342,18 +355,23 @@ def enrollment(**kwargs):
             CONTINUE            = False
 
     # sign up
-    if kwargs['choice'] == '2':
+    elif kwargs['choice'] == '2':
         if user.username_validation() is True:
-            if user.user_existence() or os.path.exists(f"/repositories/{user.username}"):
-                response_message    = "user exists"
+            if user.password_match():
+                if user.user_existence() or os.path.exists(f"/repositories/{user.username}"):
+                    response_message    = "user exists"
+                    color               = Text_Color.ERROR.value
+                    CONTINUE            = False
+                else:
+                    user.create_user()
+                    user.change_shell(config.shell_name)
+                    user.add_to_group(config.group_name)
+                    response_message    = f"user {user.username} created successfully."
+                    color               = Text_Color.SUCCESS.value
+            else:
+                response_message    = "Sorry, passwords do not match."
                 color               = Text_Color.ERROR.value
                 CONTINUE            = False
-            else:
-                user.create_user()
-                user.change_shell(config.shell_name)
-                user.add_to_group(config.group_name)
-                response_message    = f"user {user.username} created successfully."
-                color               = Text_Color.SUCCESS.value
         else:
             response_message    = f"username {user.username} is invalid only (words, digits, ., - , _) is valid"
             color               = Text_Color.ERROR.value

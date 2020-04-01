@@ -17,7 +17,7 @@ from sys import argv
 from time import sleep
 from pyfiglet import Figlet 
 from termcolor import colored
-
+import sys
 
 
 def signin():
@@ -29,9 +29,11 @@ def signin():
 
 def signup():
     print('sign up:\n')
+    passwords = list()
     username = input("username: ")
-    password = getpass.getpass(f"[git] password for {username}: ")
-    return {'username': username, 'password': password}
+    passwords.append(getpass.getpass(f"[git] password for {username}: "))
+    passwords.append(getpass.getpass(f"Retype password: "))
+    return {'username': username, 'password': passwords}
 
 def menu(user, company_name):
     username_colorful = colored(user, 'cyan')
@@ -75,7 +77,7 @@ def main():
         sign_response = None
         os.system("clear")
         print(greeting(company_name))
-        print("Welcome:\n1)sign in\n2)sign up")
+        print("Welcome:\n1)sign in\n2)sign up\n3)exit")
         s = input('choice: ')
         # sign in
         if s == '1':
@@ -96,6 +98,14 @@ def main():
             CONTINUE        = sign_response['continue']
             print(colored(sign_response['msg'], sign_response['color']))
             break
+        # exit
+        elif s == '3':
+
+            connection.sendall(serializer(choice=s))
+            CONTINUE = False
+            print("Bye!")
+            break
+            exit(0)
 
         else:
             print(colored('Unknown command!', 'red'))

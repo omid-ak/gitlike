@@ -22,7 +22,12 @@ import re
 class User:
     def __init__(self, username, password):
         self.username   = username
-        self.password   = password
+        if isinstance(password, list):
+            self.passwords  = password
+            self.password   = self.passwords[0]
+        else:
+            self.password   = password
+            self.passwords  = []
         self.all_repos  = list()
         self.show_repos()
     
@@ -37,6 +42,13 @@ class User:
             return True
         else:
             return False
+
+    def password_match(self):
+        if self.passwords:
+            if len(self.passwords) == 2 and self.passwords[0] == self.passwords[1]:
+                return True
+            else:
+                return False
 
     def user_authentication(self):
         if pam.authenticate(self.username, self.password):
