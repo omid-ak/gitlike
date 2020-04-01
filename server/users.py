@@ -54,14 +54,15 @@ class User:
     def delete_user(self):
 
         try:
-            os.system(f"userdel {self.username}")
+            os.system(f"userdel -f {self.username}")
         except:
             print(f"user {self.username} not found")
-            pass
+
         try:
             shutil.rmtree(f"/home/{self.username}")
         except:
             print(f"home user directory for user {self.username} not found")
+
         try:
             shutil.rmtree(f"/repositories/{self.username}/")
         except:

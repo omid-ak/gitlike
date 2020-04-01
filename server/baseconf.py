@@ -1,16 +1,21 @@
 """
 v1.0
-
-Basic configuration of Server Side part of GitLike Project.
-
+GiLike Project
+Copyleft (C) 2020 omid akhgary. All Rights Reserved.
+Licence: GPL3
+Email: omid7798@gmail.com
 """
-_author = 'omid'
+__author__ = 'omid <omid7798@gmail.com>'
+
+# Basic configuration of Server Side part of GitLike Project.
 
 from enum import Enum
 import platform
 import socket
 import os
 import grp
+
+"""define multiple distribution and OS"""
 
 class Distro_Type(Enum):
     REDHAT  = ['fedora', 'centos', 'suse']
@@ -64,7 +69,7 @@ class Config:
         self.shell_name                         = None
         self.group_name                         = None
         self.detect_distro_type()
-        self.calc_IP()
+        self.calc_ip()
         self.init_repo_dir()
         self.init_shell()
         self.init_group()
@@ -87,8 +92,8 @@ class Config:
         group.create_group()
         self.group_name = group.grp_name
 
-    def calc_IP(self):
-        self.IP = socket.gethostbyname(socket.gethostname())
+    def calc_ip(self):
+        self.ip = socket.gethostbyname(socket.gethostname())
     
     def dependencies_installation_check(self):
         if os.path.exists("/usr/bin/git") is True:

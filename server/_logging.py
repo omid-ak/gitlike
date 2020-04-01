@@ -1,6 +1,12 @@
 """
 v1.0
+GitLike Project
+Copyleft (C) 2020 GitLike. All Rights Reserved.
+Licence: GPL3
+Email: omid7798@gmail.com
+"""
 
+"""
 This module is log handler of whole  GitLike Project.
 all logs store in GitLike_log.db :
 tables:
@@ -13,6 +19,11 @@ runtime_actions: logs of actions while GitLike is Running
 **Data base GitLike_log.db will be store in log_DB Directory**
 
 """
+
+__author__ = "omid <omid7798@gmail.com>"
+
+
+
 import os
 from getpass import getuser
 import logging
@@ -69,15 +80,15 @@ class Logger():
         """
         Tables Format:
         start:
-        id|datetime|levelname|user|threadname|message|
+        id|datetime|level_name|user|thread_name|message|
         connection_received:
-        id|datetime|levelname|user|threadname|ip|port|stage|message|
+        id|datetime|level_name|user|thread_name|ip|port|stage|message|
         received_data:
-        id|datetime|levelname|user|threadname|ip|port|stage|received_data|message|
+        id|datetime|level_name|user|thread_name|ip|port|stage|received_data|message|
         sent_data:
-        id|datetime|levelname|user|threadname|ip|port|stage|sent_data|message|
+        id|datetime|level_name|user|thread_name|ip|port|stage|sent_data|message|
         runtime_actions:
-        id|datetime|levelname|user|threadname|ip|port|username|stage|action_|message
+        id|datetime|level_name|user|thread_name|ip|port|username|stage|action_|message
         """
 
         start_table                 = """CREATE TABLE IF NOT EXISTS start (
@@ -86,7 +97,7 @@ class Logger():
                                         level_name  VARCHAR (20),
                                         user_       VARCHAR (50),
                                         thread_name VARCHAR (50),
-                                        message     VARCHAR (200)
+                                        message     VARCHAR (1000)
                                                                             )"""
 
         connection_received_table   = """CREATE TABLE IF NOT EXISTS connection_received (
@@ -98,7 +109,7 @@ class Logger():
                                           ip          VARCHAR (16),
                                           port        VARCHAR (10),
                                           stage       VARCHAR (50),
-                                          message     VARCHAR (200)
+                                          message     VARCHAR (10000)
                                                                                           )"""
 
         received_data_table         = """CREATE TABLE IF NOT EXISTS received_data (
@@ -110,8 +121,8 @@ class Logger():
                                         ip              VARCHAR (16),
                                         port            VARCHAR (10),
                                         stage           VARCHAR (50),
-                                        received_data   VARCHAR (200),
-                                        message         VARCHAR (200)
+                                        received_data   VARCHAR (1000),
+                                        message         VARCHAR (1000)
                                                                                             )"""
 
         sent_data_table             = """CREATE TABLE IF NOT EXISTS sent_data (
@@ -123,11 +134,11 @@ class Logger():
                                         ip              varchar (16),
                                         port            varchar (10),
                                         stage           varchar (50),
-                                        sent_data       varchar (200),
-                                        message         varchar (200)
+                                        sent_data       varchar (1000),
+                                        message         varchar (1000)
                                                                                             )"""
 
-        runtime_actions_table             = """CREATE TABLE IF NOT EXISTS runtime_actions (
+        runtime_actions_table       = """CREATE TABLE IF NOT EXISTS runtime_actions (
                                         id              integer primary key autoincrement,
                                         date_time       varchar (50),
                                         level_name      varchar (20),
@@ -138,7 +149,7 @@ class Logger():
                                         username        VARCHAR (50),
                                         stage           VARCHAR (50),
                                         action_         varchar (200),
-                                        message         varchar (200)
+                                        message         varchar (1000)
                                                                                             )"""
 
         self.create_DB_connection()
@@ -202,7 +213,7 @@ class Logger():
                                         '{str(self.log_data)}',
                                         '{str(self.log_message)}')"""
 
-        elif self.log_data is Log_Type.RUNTIME_ACTIONS:
+        elif self.log_type is Log_Type.RUNTIME_ACTIONS:
             query_ = f"""INSERT INTO  runtime_actions (date_time,level_name,user_,thread_name,ip,port,username,stage,action_,message)
                                 VALUES ('{str(self.now_tostring)}', 
                                         '{str(self.level_name)}',
@@ -235,18 +246,18 @@ class Logger():
         self.level_number = kwargs.get("level", logging.INFO)
         if self.level_number is None:
             self.level_number = logging.INFO
-        self.level_name = logging._levelToName.get(self.level_number, None)
+        self.level_name = logging.getLevelName(self.level_number)
 
         if self.log_type is Log_Type.START:
-            self.log_message = kwargs.get('log_msg', "GitLike started")
-        if self.log_type is Log_Type.CONNECTION_RECEIVED:
-            self.log_message = kwargs.get('log_msg', f"connection received from {self.ip}:{self.port}")
-        if self.log_type is Log_Type.RECEIVED_DATA:
-            self.log_message = kwargs.get('log_msg', f"from {self.ip}:{self.port} received {self.log_data}")
-        if self.log_type is Log_Type.SENT_DATA:
-            self.log_message = kwargs.get('log_msg', f"data sent {self.log_data} to {self.ip}:{self.port}")
-        if self.log_type is Log_Type.RUNTIME_ACTIONS:
+            self.log_message = str(kwargs.get('log_msg', "GitLike started")).replace('\'', '`')
+        elif self.log_type is Log_Type.CONNECTION_RECEIVED:
+            self.log_message = str(kwargs.get('log_msg', f"connection received from {self.ip}:{self.port}")).replace('\'', '`')
+        elif self.log_type is Log_Type.RECEIVED_DATA:
+            self.log_message = str(kwargs.get('log_msg', f"from {self.ip}:{self.port} received {self.log_data}")).replace('\'', '`')
+        elif self.log_type is Log_Type.SENT_DATA:
+            self.log_message = str(kwargs.get('log_msg', f"data sent {self.log_data} to {self.ip}:{self.port}")).replace('\'', '`')
+        elif self.log_type is Log_Type.RUNTIME_ACTIONS:
             self.username       = kwargs.get("username", None)
-            self.log_message    = kwargs.get("log_msg", None)
+            self.log_message    = str(kwargs.get("log_msg", None)).replace('\'', '`')
 
         self.insert_into_log_table()

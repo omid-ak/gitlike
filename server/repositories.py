@@ -1,11 +1,14 @@
 """
 v1.0
-
-Repository management of Server Side part of GitLike Project.
-
+GiLike Project
+Copyleft (C) 2020 GitLike. All Rights Reserved.
+Licence: GPL3
+Email: omid7798@gmail.com
 """
 
-_author = "omid"
+# Repository management of Server Side part of GitLike Project.
+
+__author__ = "omid <omid7798@gmail.com>"
 
 from users import User
 from baseconf import Config, Group
@@ -14,6 +17,7 @@ import pwd
 import grp
 import re
 import shutil
+import pickle
 
 class Repository(User, Group, Config):
     def __init__(self, repo_name, username, password, group_name):
@@ -23,13 +27,15 @@ class Repository(User, Group, Config):
         Config.__init__(self)
         self.repo_link = None
         self.repo_path = None
-        self.get_repo_link_and_path()
-        self.contributors = list()
+        self.repo_contributors_db = None
+        self.get_repo_link_and_path_and_contributors_db()
+        self.contributors = dict()
         self.show_contributors()
 
-    def get_repo_link_and_path(self):
+    def get_repo_link_and_path_and_contributors_db(self):
+        self.repo_contributors_db = f"/repositories/{self.username}/contributors/{self.repo_name}.json"
         self.repo_path = f"/repositories/{self.username}/{self.repo_name}.git"
-        self.repo_link = f"ssh://{self.username}@{self.IP}:{self.PORT}{self.repo_path}"
+        self.repo_link = f"ssh://{self.username}@{self.ip}:{self.git_port}{self.repo_path}"
 
     def repo_existence(self):
         if os.path.exists(self.repo_path) is True:
@@ -45,8 +51,8 @@ class Repository(User, Group, Config):
 
     def create_repository(self):
         os.makedirs(self.repo_path)
-        with open(f"/repositories/{self.username}/contributors/{self.repo_name}.txt", "a") as fw:
-            fw.writelines(f"*{self.username}\n")
+        self.contributors = {"owner": self.username, "others": []}
+        pickle.dump(self.contributors, open(self.repo_contributors_db, "wb"))
         os.chdir(self.repo_path)
         os.system("git init --bare --share=group")
         os.system(f"chgrp -R {self.group_name} .")
@@ -60,21 +66,21 @@ class Repository(User, Group, Config):
             os.unlink(f"/home/{self.username}/{self.repo_name}.git")
         except:
             pass
-        contributors_except_owner = list(filter(lambda x: '*' not in x, self.contributors))
-        if len(contributors_except_owner) > 0:
-            for p in contributors_except_owner:
+
+        if len(self.contributors.get("others")) > 0:
+            for p in self.contributors.get("others"):
                 try:
                     os.unlink(f"/repositories/{p}/{self.repo_name}.git")
                 except :
                     print(f"repo {self.repo_name} not found for user {p}")
                     pass
                 try:
-                    os.unlink(f"/repositories/{p}/contributors/{self.repo_name}.txt/")
+                    os.unlink(f"/repositories/{p}/contributors/{self.repo_name}.json")
                 except :
                     print(f"contributors file for repo {self.repo_name} not found for user {p}")
                     pass
         try:
-            os.remove(f"/repositories/{self.username}/contributors/{self.repo_name}.txt/")
+            os.remove(self.repo_contributors_db)
         except :
             print(f"contributors file for repo {self.repo_name} not found for user {self.username}")
             pass
@@ -85,66 +91,49 @@ class Repository(User, Group, Config):
             pass
 
     def add_contributor(self, member):
-        with open(f"/repositories/{self.username}/contributors/{self.repo_name}.txt", "a") as fw:
-            fw.writelines(member+'\n')
+        self.show_contributors()
+        self.contributors["others"].append(member)
+        pickle.dump(self.contributors, open(self.repo_contributors_db, "wb"))
+
         try:
             os.system(f"ln -s {self.repo_path} /repositories/{member}/{self.repo_name}.git")
-            os.system(f"ln -s /repositories/{self.username}/contributors/{self.repo_name}.txt /repositories/{member}/contributors/{self.repo_name}.txt")
+            os.system(f"ln -s {self.repo_contributors_db} /repositories/{member}/contributors/{self.repo_name}.json")
         except:
             print(f"directory for user {member} not found!")
             pass
-        self.show_contributors()
 
     def remove_contributor(self, member):
         self.show_contributors()
-        tmp = self.contributors
-
-        open(f"/repositories/{self.username}/contributors/{self.repo_name}.txt", "w").close()
-
-        tmp.remove(member)
-
-        for con in tmp:
-            print(con)
-            with open(f"/repositories/{self.username}/contributors/{self.repo_name}.txt", "a") as fw:
-                fw.writelines(con+'\n')
-                fw.close()
-        try:
-            os.unlink(f"/repositories/{member}/contributors/{self.repo_name}.txt/")
-        except:
-            print(f"contributors file for repo {self.repo_name} not found for user {member}")
-            pass
+        self.contributors["others"].remove(member)
+        pickle.dump(self.contributors, open(self.repo_contributors_db, "wb"))
         try:
             os.unlink(f"/repositories/{member}/{self.repo_name}.git")
         except:
             print(f"repo {self.repo_name} not found for user {member}")
             pass
-        self.show_contributors()
+        try:
+            os.unlink(f"/repositories/{member}/contributors/{self.repo_name}.json")
+        except:
+            print(f"contributors file for repo {self.repo_name} not found for user {member}")
+            pass
 
     def is_contributor(self, member):
         self.show_contributors()
-        if member in self.contributors:
+        if member in self.contributors.get("others"):
+            return True
+        else:
+            return False
+
+    def is_repo_owner(self):
+        self.show_contributors()
+        if self.username == self.contributors.get("owner"):
             return True
         else:
             return False
 
     def show_contributors(self):
 
-        if os.path.exists(f"/repositories/{self.username}/contributors/{self.repo_name}.txt") is True:
-            repo_owner = None
-            entries = list()
-
-            self.contributors.clear()
-            with open(f"/repositories/{self.username}/contributors/{self.repo_name}.txt", 'r') as fr:
-                entries = fr.readlines()
-                fr.close()
-            repo_owner = list(filter(lambda x: '*' in x, entries))[0].strip('\n').strip('*')
-
-            for lines in entries:
-                user = User(lines.strip('\n').strip('*'), '')
-                if user.user_existence():
-                    if user.username == repo_owner:
-                        self.contributors.append(f"*{user.username}")
-                    else:
-                        self.contributors.append(user.username)
+        if os.path.exists(self.repo_contributors_db) is True:
+            self.contributors = pickle.load(open(self.repo_contributors_db, "rb"))
         else:
             pass

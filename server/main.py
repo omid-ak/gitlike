@@ -1,27 +1,34 @@
-#! ../venv/bin/python
-
 """
 v1.0
-
-This Is Main part of git server of `GITLIKE` Project Written By  Omid Akhgary
-If You Want To Contact With Me:
-Email: omid7798@gmail.com
-License: GPL3
-
+GitLike Project
+Copyright (C) 2020 GitLike. All Rights Reserved.
+Licence: GPL3
+omid7798@gmail.com
 """
 
-_author = "omid"
+"""
+Main Module To Run
+* Be Aware that This Module Should Be Run As Root Privileges.!
+"""
+
+__author__ = "omid <omid7798@gmail.com>"
 
 from baseconf import Config
 from users import User
 from repositories import Repository
 from _logging import Logger, Log_Type
+
 from enum import Enum
 import socket
 from threading import Thread
 import pickle
 import os
 import logging
+
+# check for root
+if os.geteuid() != 0:
+    print('Permission denied run only with root user')
+    exit(0)
 
 # Using from configs
 config = Config()
@@ -44,32 +51,88 @@ class Stages(Enum):
 
 # Enrollment Menu Variant Stages
 Enrollment_Stages = {
-                        "1": "signin",
-                        "2": "signup"
+                        "1": "sign_in",
+                        "2": "sign_up"
                     }
 
 # Main Menu(Post Enrollment Menu) Variant Stages.
 Post_Enrollment_stages = {
-                            "1": "delete account",
+                            "1": "show my repos",
                             "2": "create repo",
                             "3": "delete repo",
                             "4": "get repo link",
-                            "5": "add contributor to repo",
-                            "6": "remove contributor from repo",
-                            "7": "show my repos",
-                            "8": "show repo contributors",
+                            "5": "show repo contributors",
+                            "6": "add contributor to repo",
+                            "7": "remove contributor from repo",
+                            "8": "delete account",
+                            "9": "exit"
                          }
 
+
+def serializer(**kwargs):
+    return pickle.dumps(kwargs)
+
+
+def deserializer(obj):
+    return pickle.loads(obj)
+
+
 # Main Thread Handler.
+"""
+stages : pre enrollment, enrollment , post enrollment
+pre enrollment:
+this Function control main process of Server
+first of all controlling data that is valid or not if is not valid log it as unknown data else
+enrollment stage:
+check for sign in or sign up in this format:
+received data format;
+
+ {
+    'choice'    : '1'/'2' --> Enrollment Stages
+    'username'  : #
+    'password'  : #
+ }
+sent data format:
+{
+    'msg'       :#
+    'continues' :#Trues/False    
+    color       :# --> message color.   
+}
+
+then check for qualification if user qualified:
+post enrollment stage:
+received data format:
+{
+    choice:#, --> 1/../9 --> Post Enrollment Stages
+    username:#,
+    password:#,
+    member:#/emp,
+    repo_name:#/emp,
+    delete_response:#/emp
+}
+
+sent data:
+
+{
+    "msg"       : #
+    "color"     : # --> message color
+}
+
+"""
 def handler(main_socket, client, addr):
-    c_ip = addr[0]
-    c_port = addr[1]
+
+    global c_ip, c_port
+    c_ip    = addr[0]
+    c_port  = addr[1]
 
     logger.main_logger(log_type=Log_Type.CONNECTION_RECEIVED, ip=c_ip, port=c_port, stage=Stages.PRE_ENROLLMENT.value)
 
     while True:
+        # controlling Unknown data
         try:
             send_com_name = {"company_name": f"{config.company_name} GitLike"}
+
+            client.sendall(serializer(**send_com_name))
 
             logger.main_logger(
                                 log_type=Log_Type.SENT_DATA,
@@ -78,13 +141,11 @@ def handler(main_socket, client, addr):
                                 data=send_com_name,
                                 stage=Stages.PRE_ENROLLMENT.value
                                 )
-
-            client.sendall(pickle.dumps(send_com_name))
-
-            enroll_recv_data = client.recv(8192)
+            """ get sign or sign up"""
+            enroll_recv_data = client.recv(4096)
 
             try:
-                rec_data_1 = pickle.loads(enroll_recv_data)
+                rec_data_1 = deserializer(enroll_recv_data)
 
                 logger.main_logger(
                                     log_type=Log_Type.RECEIVED_DATA,
@@ -99,6 +160,8 @@ def handler(main_socket, client, addr):
                                                 username=rec_data_1.get('username'),
                                                 password=rec_data_1.get('password'),
                                                )
+
+                client.sendall(serializer(**enrollment_return))
 
                 logger.main_logger(
                                     log_type=Log_Type.RUNTIME_ACTIONS,
@@ -118,24 +181,23 @@ def handler(main_socket, client, addr):
                                     stage=Stages.ENROLLMENT.value
                                     )
 
-                client.sendall(pickle.dumps(enrollment_return))
-
                 if enrollment_return['continue'] is True:
 
+                    global choose_return, response
+
                     while True:
-                        choose_return = None
-                        response = None
-                        menu_rec_data = client.recv(8192)
+                        menu_rec_data = client.recv(4096)
                         try:
-                            rec_data_2 = pickle.loads(menu_rec_data)
+                            # get post enrollment data
+                            rec_data_2 = deserializer(menu_rec_data)
 
                             logger.main_logger(
-                                                log_type=Log_Type.RECEIVED_DATA,
-                                                ip=c_ip,
-                                                port=c_port,
-                                                data=rec_data_2,
-                                                stage=Stages.POST_ENROLLMENT.value
-                                                )
+                                log_type=Log_Type.RECEIVED_DATA,
+                                ip=c_ip,
+                                port=c_port,
+                                data=rec_data_2,
+                                stage=Stages.POST_ENROLLMENT.value
+                            )
 
                             if rec_data_2['choice'] == '9':
 
@@ -150,16 +212,17 @@ def handler(main_socket, client, addr):
                                 )
 
                                 client.close()
+                                break
 
                             else:
                                 choose_return = choose(
-                                                        choice=rec_data_2.get('choice'),
-                                                        username=rec_data_2.get('username'),
-                                                        password=rec_data_2.get('password'),
-                                                        repo_name=rec_data_2.get('repo_name', None),
-                                                        member=rec_data_2.get('member', None),
-                                                        delete_response=rec_data_2.get('delete_response', None)
-                                                       )
+                                    choice=rec_data_2.get('choice'),
+                                    username=rec_data_2.get('username'),
+                                    password=rec_data_2.get('password'),
+                                    repo_name=rec_data_2.get('repo_name', None),
+                                    member=rec_data_2.get('member', None),
+                                    delete_response=rec_data_2.get('delete_response', None)
+                                )
 
                                 logger.main_logger(
                                                     log_type=Log_Type.RUNTIME_ACTIONS,
@@ -172,20 +235,24 @@ def handler(main_socket, client, addr):
                                                     )
 
                                 response = {
-                                            'msg': choose_return['msg'],
-                                            'color': choose_return['color']
+                                            'msg'   : choose_return['msg'],
+                                            'color' : choose_return['color']
                                             }
 
                                 logger.main_logger(
                                                     log_type=Log_Type.SENT_DATA,
-                                                    ip=c_ip, port=c_port,
+                                                    ip=c_ip,
+                                                    port=c_port,
                                                     data=response,
                                                     stage=Stages.POST_ENROLLMENT.value
                                                     )
 
-                                client.sendall(pickle.dumps(response))
+                                client.send(serializer(**response))
+                                if rec_data_2['choice'] == '8':
+                                    client.close()
+                                    break
 
-                        except:
+                        except Exception:
 
                             logger.main_logger(
                                                 log_type=Log_Type.RECEIVED_DATA,
@@ -197,6 +264,7 @@ def handler(main_socket, client, addr):
                                                 log_msg=f"Unknown Input Data in stage {Stages.POST_ENROLLMENT.value}!"
                                                )
                             client.close()
+                            break
                 else:
 
                     logger.main_logger(
@@ -209,8 +277,9 @@ def handler(main_socket, client, addr):
                                         log_msg=enrollment_return.get('msg')
                                        )
                     client.close()
+                    break
 
-            except:
+            except Exception:
 
                 logger.main_logger(
                                     log_type=Log_Type.RECEIVED_DATA,
@@ -223,25 +292,38 @@ def handler(main_socket, client, addr):
                                     )
 
                 client.close()
-
+                break
         except (OSError, EOFError):
+            # log Unknown data
             logger.main_logger(
                                 log_type=Log_Type.RUNTIME_ACTIONS,
                                 ip=c_ip,
                                 port=c_port,
                                 stage=Stages.PRE_ENROLLMENT.value,
                                 level=logging.WARNING,
-                                log_msg="Unknown! May Be internal oserror of eoferror"
+                                log_msg=f"Unknown Input Data On Stage {Stages.PRE_ENROLLMENT}"
                                )
-            pass
+            client.close()
+            break
+
+    client.close()
 
 def enrollment(**kwargs):
 
-    response_message    = None
-    color               = None
-    CONTINUE            = False
-    log_level           = None
+    """
+    {
+    'choice': '1' / '2' --> sign in / up
+    'username':  #
+    'password':  #
+    }
 
+    """
+
+    global response_message, color, CONTINUE
+
+    CONTINUE            = False
+
+    #sign in
     user = User(kwargs['username'], kwargs['password'])
     if kwargs['choice'] == '1':
         if user.user_existence() and os.path.exists(f"/repositories/{user.username}"):
@@ -257,10 +339,11 @@ def enrollment(**kwargs):
             response_message    = f"user {user.username} not found"
             color               = Text_Color.ERROR.value
             CONTINUE            = False
-        
+
+    # sign up
     if kwargs['choice'] == '2':
         if user.username_validation() is True:
-            if user.user_existence() and os.path.exists(f"/repositories/{user.username}"):
+            if user.user_existence() or os.path.exists(f"/repositories/{user.username}"):
                 response_message    = "user exists"
                 color               = Text_Color.ERROR.value
                 CONTINUE            = False
@@ -275,40 +358,41 @@ def enrollment(**kwargs):
             color               = Text_Color.ERROR.value
             CONTINUE            = False
 
-    return {'msg': response_message,'continue': CONTINUE, 'color': color}
+    return {'msg': response_message, 'continue': CONTINUE, 'color': color}
 
 
-"""kwargs: {choice:#, username:#, password:#, member:#/emp, repo_name:#/emp}"""
 
 def choose(**kwargs):
 
-   
-    response_message    = None
-    color               = None
-    log_leve            = None
+    """
+    kwargs: {
+            choice:#, --> 1/../9
+            username:#,
+            password:#,
+            member:#/emp,
+            repo_name:#/emp,
+            delete_response:#/emp
+            }
+    """
+    global response_message, color, choice
+
     choice              = kwargs['choice']
 
-    # delete account
+    # show repos
     if choice == '1':
         username = kwargs['username']
         password = kwargs['password']
         user = User(username, password)
-        if user.user_existence():
-            if user.user_authentication():
-                dl_ch = kwargs['delete_response']
-                if dl_ch == 'y':
-                    user.delete_user()
-                    response_message    = f"user {user.username} deleted successfully"
-                    color               = Text_Color.SUCCESS.value
-                else:
-                    response_message    = "Aborted!"
-                    color               = Text_Color.ERROR.value
-            else:
-                response_message    = "Authentication Failed !"
-                color               = Text_Color.ERROR.value
+        user.show_repos()
+
+        if len(user.all_repos) > 0:
+            repos               = ",".join(user.all_repos)
+            response_message    = repos
+            color               = Text_Color.SUCCESS.value
         else:
-            response_message    = f"user {user.username} not found"
-            color               = Text_Color.ERROR.value
+            response_message    = f"there are no repositories for user {user.username}."
+            color                = Text_Color.WARNING.value
+
 
     # create repo
     elif choice == '2':
@@ -317,12 +401,12 @@ def choose(**kwargs):
         repo_name = kwargs['repo_name']
         repository = Repository(repo_name, username, password, config.group_name)
 
-        if repository.repo_name_validation() is True:
-            if repository.repo_existence() is True:
+        if repository.repo_name_validation():
+            if repository.repo_existence():
                 response_message    = {
-                                        "resp_msg"  : "repository already exists\nclone or remote with ssh: ",
-                                        "link"      : repository.repo_link
-                                       }
+                    "resp_msg"  : "repository already exists\nclone or remote with ssh: ",
+                    "link"      : repository.repo_link
+                }
                 color               = Text_Color.WARNING.value
             else:
                 repository.create_repository()
@@ -332,7 +416,9 @@ def choose(**kwargs):
                 }
                 color            = Text_Color.SUCCESS.value
         else:
-            response_message = f"username {repository.repo_name} is invalid only (words, digits, - , _) is valid"
+            response_message = {
+                "resp_msg": f"username {repository.repo_name} is invalid only (words, digits, - , _) is valid"
+            }
             color            = Text_Color.ERROR.value
 
     # delete repo
@@ -344,7 +430,7 @@ def choose(**kwargs):
 
         if repository.repo_existence():
             repository.show_contributors()
-            if f"*{repository.username}" in repository.contributors:
+            if repository.is_repo_owner():
                 dl_ch = kwargs['delete_response']
                 if dl_ch == 'y':
                     repository.delete_repository()
@@ -359,6 +445,7 @@ def choose(**kwargs):
         else:
             response_message = f"repository {repository.repo_name} not found for user {repository.username}!"
             color            = Text_Color.ERROR.value
+
     # get repo link
     elif choice == '4':
         username = kwargs['username']
@@ -369,10 +456,30 @@ def choose(**kwargs):
             response_message = {"resp_msg": "clone or remote with ssh: ", "link": repository.repo_link}
             color            = None
         else:
-            response_message = f"repository {repository.repo_name} not found for user {repository.username}!"
+            response_message = {
+                "resp_msg": f"repository {repository.repo_name} not found for user {repository.username}!"
+            }
             color            = Text_Color.ERROR.value
-    # add member to repo
+
+    # show contributors
     elif choice == '5':
+        username = kwargs['username']
+        password = kwargs['password']
+        repo_name = kwargs['repo_name']
+        repository = Repository(repo_name, username, password, config.group_name)
+        repository.show_contributors()
+
+        if len(repository.contributors) > 0:
+
+            response_message = repository.contributors
+            color            = Text_Color.SUCCESS.value
+        else:
+            response_message    = f"there are no contributors for repository {repository.repo_name}."
+            color               = Text_Color.WARNING.value
+
+
+    # add member to repo
+    elif choice == '6':
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
@@ -381,16 +488,21 @@ def choose(**kwargs):
         if repository.repo_existence():
             member_user = User(member, '')
             if member_user.user_existence():
-                repository.add_contributor(member)
-                response_message = f"{member} added to repository {repository.repo_name}"
-
+                if repository.is_repo_owner():
+                    repository.add_contributor(member)
+                    response_message    = f"{member} added to repository {repository.repo_name}"
+                    color               = Text_Color.SUCCESS.value
+                else:
+                    response_message    = "Permission Denied!\nyou have not privilege to add member to this repository"
+                    color               = Text_Color.ERROR.value
             else:
-                response_message = f"user {member_user.username} not found"
+                response_message        = f"user {member_user.username} not found"
+                color                   = Text_Color.ERROR.value
         else:
-            response_message = f"repository {repository.repo_name} not found for user {repository.username}!"
-
+            response_message    = f"repository {repository.repo_name} not found for user {repository.username}!"
+            color               = Text_Color.ERROR.value
     # remove member from repo
-    elif choice == '6':
+    elif choice == '7':
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
@@ -401,12 +513,17 @@ def choose(**kwargs):
             if member_user.user_existence():
                 if repository.is_contributor(member):
                     repository.show_contributors()
-                    if f"*{username}" in repository.contributors:
-                        repository.remove_contributor(member)
-                        response_message    = f"{member} removed from repository {repository.repo_name}"
-                        color               = Text_Color.SUCCESS.value
+                    if repository.is_repo_owner():
+                        dl_ch = kwargs['delete_response']
+                        if dl_ch is "y":
+                            repository.remove_contributor(member)
+                            response_message    = f"{member} removed from repository {repository.repo_name}"
+                            color               = Text_Color.SUCCESS.value
+                        else:
+                            response_message = "Aborted!"
+                            color = Text_Color.ERROR.value
                     else:
-                        response_message    = f"permission denied!\nyou have not privilege to remove member {member_user.username}."
+                        response_message    = f"permission denied!\nyou have not privilege to remove  any member."
                         color               = Text_Color.ERROR.value
                 else:
                     response_message    = f"user {member} is not contributing in repository {repository.repo_name}."
@@ -417,52 +534,41 @@ def choose(**kwargs):
         else:
             response_message = f"repository {repository.repo_name} not found for user {repository.username}!"
             color            = Text_Color.ERROR.value
-    # show repos
-    elif choice == '7':
+
+
+    # delete account
+    elif choice == '8':
+
         username = kwargs['username']
         password = kwargs['password']
         user = User(username, password)
-        user.show_repos()
-
-        if len(user.all_repos) > 0:
-            repos               = ",".join(user.all_repos)
-            response_message    = repos
-            color               = Text_Color.SUCCESS.value
+        if user.user_existence():
+            if user.user_authentication():
+                dl_ch = kwargs['delete_response']
+                if dl_ch == 'y':
+                    user.delete_user()
+                    response_message = f"user {user.username} deleted successfully"
+                    color = Text_Color.SUCCESS.value
+                else:
+                    response_message = "Aborted!"
+                    color = Text_Color.ERROR.value
+            else:
+                response_message = "Authentication Failed !"
+                color = Text_Color.ERROR.value
         else:
-            response_message    = f"there are no repositories for user {user.username}."
-            color                = Text_Color.WARNING.value
-
-    # show contributors
-    elif choice == '8':
-        username = kwargs['username']
-        password = kwargs['password']
-        repo_name = kwargs['repo_name']
-        repository = Repository(repo_name, username, password, config.group_name)
-        repository.show_contributors()
-
-        if len(repository.contributors) > 0:
-            contrbs = str()
-            for r in repository.contributors:
-                contrbs      += f"{r},"
-            response_message = contrbs
-            color            = Text_Color.SUCCESS.value
-        else:
-            response_message    = f"there are no contributors for repository {repository.repo_name}."
-            color               = Text_Color.WARNING.value
+            response_message = f"user {user.username} not found"
+            color = Text_Color.ERROR.value
 
     else:
         response_message    = 'Unknown command !'
         color               = Text_Color.ERROR.value
 
-    return {"msg": response_message, "color": color, "log_leve": log_leve}
+    return {"msg": response_message, "color": color}
 
 
 def main():
     logger.main_logger(log_type=Log_Type.START)
-    # check for root
-    if os.geteuid() != 0:
-        print('Permission denied run only with root user')
-        exit(0)
+
     # Base config
     print('initializing...')
     config.company_name = input("Entenr Your Company Name: ")
@@ -470,7 +576,7 @@ def main():
 
     # install dependencies
     if config.dependencies_installation_status is False:
-        answer = input("You need to install some dependencies so you want to continues? [y/n]: ")
+        answer = input("You need to install some dependencies do you want to continues? [y/n]: ")
         if answer is "y" or answer is "Y":
             config.install_dependencies()
             logger.main_logger(Log_Type=Log_Type.START, log_msg="Dependencies Installed Successfully.")
@@ -487,17 +593,14 @@ def main():
     # connection
     
     main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ip = '0.0.0.0'
-    port = 7920
-    main_socket.bind((ip, port))
+    main_socket.bind(('0.0.0.0', config.server_port))
 
     main_socket.listen()
-    print("Wating For connection...")
+    print("Waiting For connection...")
 
     try:
         while True:
             client, addr = main_socket.accept()
-            print(f"connection from {addr[0]}:{addr[1]}")
             thread = Thread(target=handler, args=(main_socket, client, addr))
             thread.setDaemon(True)
             thread.start()
