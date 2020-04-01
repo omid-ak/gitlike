@@ -19,4 +19,4 @@ Client:<br>
 `python3 -m venv venv`<br>
 `source venv/bin/activate`<br>
 `pip install -r client/client_requirements.txt`<br>
-`python git_client.py <your_server_ip_address>`
+`python client/GitLike.py <your_server_ip_address>`
