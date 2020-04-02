@@ -81,6 +81,10 @@ class User():
             os.system(f"rm -rf /repositories/{self.username}")
         except:
             print(f"directory for user {self.username} not found")
+        try:
+            os.system(f"rm -rf /home/{self.username}")
+        except:
+            print(f"an issue occure while removing {self.username}")
 
     def change_shell(self, shell):
         os.system(f"usermod --shell {shell} {self.username}")

@@ -68,19 +68,19 @@ class Repository(User, Group, Config):
         try:
             os.unlink(f"{self.home_user_repo_path}")
         except:
-            print(f"an issue occured when unlinking {self.home_user_repo_path}")
+            print(f"an issue occured while unlinking {self.home_user_repo_path}")
 
         if len(self.contributors.get("others")) > 0:
             for p in self.contributors.get("others"):
                 try:
                     os.unlink(f"/repositories/{p}/{self.repo_name}.git")
                 except :
-                    print(f"an issue occured when unlinking {self.repo_name} for {p}")
+                    print(f"an issue occured while unlinking {self.repo_name} for {p}")
                     pass
                 try:
                     os.unlink(f"/repositories/{p}/contributors/{self.repo_name}.json")
                 except :
-                    print(f"an issue occured when unlinking /repositories/{p}/contributors/{self.repo_name}.json for {p}")
+                    print(f"an issue occured while unlinking /repositories/{p}/contributors/{self.repo_name}.json for {p}")
                     pass
         try:
             os.system(f"rm -rf {self.repo_contributors_db}")
@@ -90,7 +90,7 @@ class Repository(User, Group, Config):
         try:
             os.system(f"rm -rf {self.repo_path}")
         except :
-            print(f"an issue occured when removing {self.repo_path}")
+            print(f"an issue occured while removing {self.repo_path}")
             pass
 
     def add_contributor(self, member):
@@ -141,10 +141,9 @@ class Repository(User, Group, Config):
     def show_contributors(self):
 
         if os.path.exists(self.repo_contributors_db) is True:
-            tmp_contributors = pickle.load(open(self.repo_contributors_db, "rb"))
-            for contributors in tmp_contributors.get("others"):
-                tmp_user = User(contributors, '')
-                if tmp_user.user_existence():
-                    self.contributors['others'].append(contributors)
-        else:
-            pass
+            self.contributors = pickle.load(open(self.repo_contributors_db, "rb"))
+            for contributor in self.contributors.get("others"):
+                tmp_user = User(contributor, '')
+                if tmp_user.user_existence() is False:
+                    self.contributors['others'].remove(contributor)
+    
