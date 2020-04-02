@@ -30,7 +30,7 @@ class Shell:
         self.shell_existence()
 
     def shell_existence(self):
-        if os.path.exists(self.sh_name):
+        if os.path.exists(self.sh_name) or self.sh_name in open("/etc/shells", "r").read().split("\n"):
             self.shell_existence_status = True
         else:
             self.shell_existence_status = False

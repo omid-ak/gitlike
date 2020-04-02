@@ -16,7 +16,6 @@ import pam
 import os
 import pwd
 import crypt
-import shutil
 import re
 
 class User():
@@ -68,18 +67,15 @@ class User():
             os.mkdir(f"/repositories/{self.username}")
         if os.path.exists(f"/repositories/{self.username}/contributors/") is False:
             os.mkdir(f"/repositories/{self.username}/contributors/")
+        if os.path.exists(f"/home/{self.username}") is False:
+            os.mkdir(f"/home/{self.username}")
 
     def delete_user(self):
 
         try:
-            os.system(f"userdel {self.username}")
+            os.system(f"userdel -r {self.username}")
         except:
             print(f"user {self.username} not found")
-
-        try:
-            os.system(f"rm -rf /home/{self.username}")
-        except:
-            print(f"home user directory for user {self.username} not found")
 
         try:
             os.system(f"rm -rf /repositories/{self.username}")

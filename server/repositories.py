@@ -16,7 +16,6 @@ import os
 import pwd
 import grp
 import re
-import shutil
 import pickle
 
 class Repository(User, Group, Config):
@@ -52,45 +51,45 @@ class Repository(User, Group, Config):
             return False
 
     def create_repository(self):
-        os.system(f"mkdir {self.repo_path}")
+        os.mkdir(f"{self.repo_path}")
+        os.mkdir(f"{self.home_user_repo_path}")
         self.contributors = {"owner": self.username, "others": []}
         pickle.dump(self.contributors, open(self.repo_contributors_db, "wb"))
         os.chdir(self.repo_path)
         os.system("git init --bare --share=group")
         os.system(f"chgrp -R {self.group_name} .")
-        os.system(f"mkdir {self.home_user_repo_path}")
-        os.system(f"ln -s {self.repo_path} /home/{self.username}/{self.repo_name}.git")
+        os.system(f"ln -s {self.repo_path} {self.home_user_repo_path}")
         os.system(f"chown -R {self.username}:{self.group_name} {self.home_user_repo_path}")
         self.show_repos()
 
     def delete_repository(self):
         self.show_contributors()
         try:
-            os.unlink(f"/home/{self.username}/{self.repo_name}.git")
+            os.unlink(f"{self.home_user_repo_path}")
         except:
-            pass
+            print("an issue occured when unlinking {self.home_user_repo_path}")
 
         if len(self.contributors.get("others")) > 0:
             for p in self.contributors.get("others"):
                 try:
                     os.unlink(f"/repositories/{p}/{self.repo_name}.git")
                 except :
-                    print(f"repo {self.repo_name} not found for user {p}")
+                    print(f"an issue occured when unlinking {self.repo_name} for {p}")
                     pass
                 try:
                     os.unlink(f"/repositories/{p}/contributors/{self.repo_name}.json")
                 except :
-                    print(f"contributors file for repo {self.repo_name} not found for user {p}")
+                    print(f"an issue occured when unlinking /repositories/{p}/contributors/{self.repo_name}.json for {p}")
                     pass
         try:
-            os.remove(self.repo_contributors_db)
+            os.system(f"rm -rf {self.repo_contributors_db}")
         except :
             print(f"contributors file for repo {self.repo_name} not found for user {self.username}")
             pass
         try:
             os.system(f"rm -rf {self.repo_path}")
         except :
-            print(f"repo {self.repo_name} not found for user {self.username}")
+            print(f"an issue occured when removing {self.repo_path}")
             pass
 
     def add_contributor(self, member):
@@ -104,9 +103,9 @@ class Repository(User, Group, Config):
 
             os.makedirs(self.home_user_repo_path)
             os.system(f"ln -s {self.repo_path} /home/{member}/{self.repo_name}.git")
-
+            os.system(f"chown -R {member}:{self.group_name} /home/{member}/{self.repo_name}.git")
         except:
-            print(f"directory for user {member} not found!")
+            print(f"an issue occured in {member} files for repository {self.repo_name}")
             pass
 
     def remove_contributor(self, member):
