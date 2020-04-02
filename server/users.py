@@ -63,7 +63,7 @@ class User():
             os.system(f"useradd -p {encPass} {self.username}")
         except:
             print(f"user {self.username} exists.")
-            pass
+
         if os.path.exists(f"/repositories/{self.username}") is False:
             os.mkdir(f"/repositories/{self.username}")
         if os.path.exists(f"/repositories/{self.username}/contributors/") is False:
@@ -72,17 +72,17 @@ class User():
     def delete_user(self):
 
         try:
-            os.system(f"userdel -f {self.username}")
+            os.system(f"userdel {self.username}")
         except:
             print(f"user {self.username} not found")
 
         try:
-            shutil.rmtree(f"/home/{self.username}")
+            os.system(f"rm -rf /home/{self.username}")
         except:
             print(f"home user directory for user {self.username} not found")
 
         try:
-            shutil.rmtree(f"/repositories/{self.username}/")
+            os.system(f"rm -rf /repositories/{self.username}")
         except:
             print(f"directory for user {self.username} not found")
 
@@ -90,7 +90,7 @@ class User():
         os.system(f"usermod --shell {shell} {self.username}")
 
     def add_to_group(self, group_name):
-        os.system(f"usermod -g {group_name} {self.username}")
+        os.system(f"usermod -aG {group_name} {self.username}")
 
     def show_repos(self):
         self.all_repos.clear()
