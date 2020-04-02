@@ -141,6 +141,10 @@ class Repository(User, Group, Config):
     def show_contributors(self):
 
         if os.path.exists(self.repo_contributors_db) is True:
-            self.contributors = pickle.load(open(self.repo_contributors_db, "rb"))
+            tmp_contributors = pickle.load(open(self.repo_contributors_db, "rb"))
+            for contributors in tmp_contributors.get("others"):
+                tmp_user = User(contributors, '')
+                if tmp_user.user_existence():
+                    self.contributors['others'].append(contributors)
         else:
             pass

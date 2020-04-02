@@ -72,7 +72,7 @@ class User():
     def delete_user(self):
 
         try:
-            os.system(f"userdel -f {self.username}")
+            os.system(f"userdel {self.username}")
         except:
             print(f"user {self.username} not found")
 
@@ -90,7 +90,7 @@ class User():
         os.system(f"usermod --shell {shell} {self.username}")
 
     def add_to_group(self, group_name):
-        os.system(f"usermod -g {group_name} {self.username}")
+        os.system(f"usermod -aG {group_name} {self.username}")
 
     def show_repos(self):
         self.all_repos.clear()
