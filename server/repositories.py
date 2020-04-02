@@ -52,13 +52,13 @@ class Repository(User, Group, Config):
             return False
 
     def create_repository(self):
-        os.makedirs(self.repo_path)
+        os.system(f"mkdir {self.repo_path}")
         self.contributors = {"owner": self.username, "others": []}
         pickle.dump(self.contributors, open(self.repo_contributors_db, "wb"))
         os.chdir(self.repo_path)
         os.system("git init --bare --share=group")
         os.system(f"chgrp -R {self.group_name} .")
-        os.makedirs(self.home_user_repo_path)
+        os.system(f"mkdir {self.home_user_repo_path}")
         os.system(f"ln -s {self.repo_path} /home/{self.username}/{self.repo_name}.git")
         os.system(f"chown -R {self.username}:{self.group_name} {self.home_user_repo_path}")
         self.show_repos()
@@ -104,8 +104,6 @@ class Repository(User, Group, Config):
 
             os.makedirs(self.home_user_repo_path)
             os.system(f"ln -s {self.repo_path} /home/{member}/{self.repo_name}.git")
-            os.system(f"chown -R {member}:{self.group_name} /home/{member}/{self.repo_name}")
- 
 
         except:
             print(f"directory for user {member} not found!")
