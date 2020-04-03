@@ -6,17 +6,9 @@ Instructions:
 
 Server:<br>
 
-***Notice that run main.py in server only with root user!***<br>
 
-`sudo su`<br>
-`python3 -m venv venv`<br>
-`source venv/bin/activate`<br>
-`pip install -r server/server_requirements.txt`<br>
-`python server/main.py`
+[GitLike Server Notes](https://gitlab.com/omid7798/git-server-config/-/blob/server/GITLIKE_SERVER.md)<br>
 
 Client:<br>
 
-`python3 -m venv venv`<br>
-`source venv/bin/activate`<br>
-`pip install -r client/client_requirements.txt`<br>
-`python client/GitLike.py <your_server_ip_address>`
+[GitLike Client Notes](https://gitlab.com/omid7798/git-server-config/-/blob/client/GITLIKE_CLIENT.md)
