@@ -104,7 +104,6 @@ class Repository(User, Group, Config):
 
             os.makedirs(self.home_user_repo_path)
             os.system(f"ln -s {self.repo_path} /home/{member}/{self.repo_name}.git")
-            os.system(f"chown -R {member}:{self.group_name} /home/{member}/{self.repo_name}.git")
         except:
             print(f"an issue occured in {member} files for repository {self.repo_name}")
             pass
