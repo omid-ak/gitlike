@@ -73,7 +73,11 @@ class User():
     def delete_user(self):
 
         try:
+<<<<<<< HEAD
             os.system(f"userdel -fr {self.username}")
+=======
+            os.system(f"userdel -frZ {self.username}")
+>>>>>>> 3f4dee3d11e8364b831552696fcd4a1ef7d0b625
         except:
             print(f"user {self.username} not found")
 
