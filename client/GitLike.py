@@ -1,0 +1,399 @@
+"""
+v1.0
+GitLike Project
+Copyleft (C) 2020 GitLike. All Rights Reserved.
+Licence: GPL3
+Email: omid7798@gmail.com
+
+"""
+
+__author__ = "omid <7798@gmail.com>"
+
+import os
+import socket
+import pickle
+import getpass
+from sys import argv
+from time import sleep
+from pyfiglet import Figlet 
+from termcolor import colored
+import sys
+
+
+def signin():
+    print('sign in:\n')
+    username = input("username: ")
+    password = getpass.getpass(f"[git] password for {username}: ")
+    return {'username': username, 'password': password}
+
+
+def signup():
+    print('sign up:\n')
+    passwords = list()
+    username = input("username: ")
+    passwords.append(getpass.getpass(f"[git] password for {username}: "))
+    passwords.append(getpass.getpass(f"Retype password: "))
+    return {'username': username, 'password': passwords}
+
+def menu(user, company_name):
+    username_colorful = colored(user, 'cyan')
+    os.system("clear")
+    print(greeting(company_name))
+    print(f'choose :\t\t\t\tuser:{username_colorful}\n'
+          
+          '1-show my repositories\n'
+          '2-create repository\n'
+          '3-delete repository\n'
+          '4-get repository link\n'
+          '5-show repository contributors\n'
+          '6-add contributor to repository\n'
+          '7-remove contributor from repository\n'
+          '8-delete account\n'
+          '9-exit\n'
+          )
+
+
+def greeting(company_name):
+    f = Figlet(font='standard')
+    return colored(f.renderText(company_name), "green")
+
+
+def serializer(**kwargs):
+    return pickle.dumps(kwargs)
+
+
+def deserializer(obj):
+    return pickle.loads(obj)
+
+
+def main():
+    connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ip = argv[1]
+    port = 7920
+    connection.connect((ip, port))
+    while True:
+        global sign_response
+        company_name = deserializer(connection.recv(4096))["company_name"]
+        sign_response = None
+        os.system("clear")
+        print(greeting(company_name))
+        print("Welcome:\n1)sign in\n2)sign up\n3)exit")
+        s = input('choice: ')
+        # sign in
+        if s == '1':
+            us = signin()
+            connection.sendall(serializer(choice=s, username=us['username'], password=us['password']))
+            print("please wait ...")
+            sign_response   = deserializer(connection.recv(4096))
+            CONTINUE        = sign_response['continue']
+            print(colored(sign_response['msg'], sign_response['color']))
+            break
+
+        # sign up
+        elif s == '2':
+            us = signup()
+            connection.sendall(serializer(choice=s, username=us['username'], password=us['password']))
+            print("please wait ...")
+            sign_response   = deserializer(connection.recv(4096))
+            CONTINUE        = sign_response['continue']
+            print(colored(sign_response['msg'], sign_response['color']))
+            break
+        # exit
+        elif s == '3':
+
+            connection.sendall(serializer(choice=s))
+            CONTINUE = False
+            print("Bye!")
+            break
+            exit(0)
+
+        else:
+            print(colored('Unknown command!', 'red'))
+            break
+            exit(0)
+
+    if CONTINUE:
+
+        global menu_response, choice
+
+        sleep(2)
+        while True:
+            menu_response = None
+            menu(us['username'], company_name)
+            choice = input('choice: ')
+
+            # show my repos
+            if choice == '1':
+                connection.sendall(serializer(choice=choice,
+                                              username=us['username'],
+                                              password=us['password']
+                                              )
+                                   )
+
+                print("please wait ...")
+
+                menu_response = deserializer(connection.recv(4096))
+                repos_resp = menu_response['msg']
+                if ',' in repos_resp:
+                    for repo in repos_resp.split(','):
+                        print(colored(repo, menu_response['color']))
+                else:
+                    print(colored(repos_resp, menu_response['color']))
+
+                c = input("Do you have any other request? (y/n): ")
+                if c == 'y':
+                    continue
+                elif c == 'n':
+                    print('Bye!')
+                    break
+                    exit(0)
+                else:
+                    print(colored("Unknown command!", 'red'))
+                    break
+                    exit(0)
+
+
+            # create repo
+            elif choice == '2':
+
+                repo_name = input("Enter repository name: ")
+
+                connection.sendall(serializer(choice=choice,
+                                              username=us['username'],
+                                              password=us['password'],
+                                              repo_name=repo_name
+                                              )
+                                   )
+
+                print("please wait ...")
+
+                menu_response   = deserializer(connection.recv(4096))
+                resp_msg        = menu_response['msg'].get('resp_msg', None)
+                link            = menu_response['msg'].get('link', None)
+                if resp_msg is not None and link is not None:
+                    print(colored(resp_msg, menu_response['color']))
+                    print(colored(link, 'blue'))
+                else:
+                    print(colored(resp_msg, menu_response['color']))
+
+                c = input("Do you have any other request? (y/n): ")
+                if c == 'y':
+                    continue
+                elif c == 'n':
+                    print('Bye!')
+                    break
+                    exit(0)
+                else:
+                    print(colored("Unknown command!", 'red'))
+                    break
+                    exit(0)
+
+            # delete repo
+            elif choice == '3':
+
+                repo_name = input("Enter repository name: ")
+
+                dl_ch = input(colored(f"Are you sure you want delete repository {repo_name}? (y/n): ", 'yellow'))
+
+                connection.sendall(serializer(choice=choice,
+                                              username=us['username'],
+                                              password=us['password'],
+                                              repo_name=repo_name,
+                                              delete_response=dl_ch
+                                              )
+                                   )
+
+                print("please wait ...")
+
+                menu_response = deserializer(connection.recv(4096))
+
+                print(colored(menu_response['msg'], menu_response['color']))
+                c = input("Do you have any other request? (y/n): ")
+                if c == 'y':
+                    continue
+                elif c == 'n':
+                    print('Bye!')
+                    break
+                    exit(0)
+                else:
+                    print(colored("Unknown command!", 'red'))
+                    break
+                    exit(0)
+
+
+            # get repo link
+            elif choice == '4':
+
+                repo_name = input("Enter repository name: ")
+
+                connection.sendall(serializer(choice=choice,
+                                              username=us['username'],
+                                              password=us['password'],
+                                              repo_name=repo_name
+                                              )
+                                   )
+
+                print("please wait ...")
+
+                menu_response = deserializer(connection.recv(4096))
+                resp_msg = menu_response['msg'].get('resp_msg', None)
+                link = menu_response['msg'].get('link', None)
+                if resp_msg is not None and link is not None:
+                    print(colored(resp_msg, menu_response['color']))
+                    print(colored(link, 'blue'))
+                else:
+                    print(colored(resp_msg, menu_response['color']))
+                c = input("Do you have any other request? (y/n): ")
+                if c == 'y':
+                    continue
+                elif c == 'n':
+                    print('Bye!')
+                    break
+                    exit(0)
+                else:
+                    print(colored("Unknown command!", 'red'))
+                    break
+                    exit(0)
+
+            # show repo contributors
+            elif choice == '5':
+
+                repo_name = input("Enter repository name: ")
+
+                connection.sendall(serializer(choice=choice,
+                                              username=us['username'],
+                                              password=us['password'],
+                                              repo_name=repo_name
+                                              )
+                                   )
+
+                print("please wait ...")
+
+                menu_response = deserializer(connection.recv(4096))
+                contrbs = menu_response['msg']
+                if isinstance(contrbs, dict):
+                    print(colored(contrbs.get("owner"), "magenta"))
+                    for con in contrbs.get("others"):
+                        print(colored(con, menu_response['color']))
+                else:
+                    print(colored(contrbs, menu_response['color']))
+
+                c = input("Do you have any other request? (y/n): ")
+                if c == 'y':
+                    continue
+                elif c == 'n':
+                    print('Bye!')
+                    break
+                    exit(0)
+                else:
+                    print(colored("Unknown command!", 'red'))
+                    break
+                    exit(0)
+
+
+
+
+            # add member to repo
+            elif choice == '6':
+
+                repo_name   = input("Enter repository name: ")
+                member      = input("username of contributor: ")
+
+                connection.sendall(serializer(choice=choice,
+                                              username=us['username'],
+                                              password=us['password'],
+                                              repo_name=repo_name,
+                                              member=member
+                                              )
+                                   )
+
+                print("please wait ...")
+
+                menu_response = deserializer(connection.recv(4096))
+                print(colored(menu_response['msg'], menu_response['color']))
+                c = input("Do you have any other request? (y/n): ")
+                if c == 'y':
+                    continue
+                elif c == 'n':
+                    print('Bye!')
+                    break
+                    exit(0)
+                else:
+                    print(colored("Unknown command!", 'red'))
+                    break
+                    exit(0)
+
+            # remove member from repo
+            elif choice == '7':
+                repo_name   = input("Enter repository name: ")
+                member      = input("username of contributor: ")
+                dl_ch       = input(colored(f"Are yout sure you want delete user {member} from repository {repo_name}? (y/n): ", "yellow"))
+                connection.sendall(serializer(choice=choice,
+                                              username=us['username'],
+                                              password=us['password'],
+                                              repo_name=repo_name,
+                                              member=member,
+                                              delete_response=dl_ch
+                                              )
+                                   )
+
+                print("please wait ...")
+
+                menu_response = deserializer(connection.recv(4096))
+                print(colored(menu_response['msg'], menu_response['color']))
+                c = input("Do you have any other request? (y/n): ")
+                if c == 'y':
+                    continue
+                elif c == 'n':
+                    print('Bye!')
+                    break
+                    exit(0)
+                else:
+                    print(colored("Unknown command!", 'red'))
+                    break
+                    exit(0)
+
+
+
+            # delete account
+            elif choice == '8':
+                username_auth = input("username: ")
+                password_auth = getpass.getpass(f"[git] password for {username_auth}: ")
+                if username_auth == us['username'] and password_auth == us['password']:
+                    dl_ch = input(colored(f"Also all repositories for {username_auth} will be remove\n"
+                                  f"Are you sure you want to delete user {username_auth} ? (y/n): ", 'yellow'))
+
+                    connection.sendall(serializer(choice=choice,
+                                                  username=username_auth,
+                                                  password=password_auth,
+                                                  delete_response=dl_ch
+                                                  )
+                                       )
+                    print("please wait ...")
+                    menu_response = deserializer(connection.recv(4096))
+                    print(colored(menu_response['msg'], menu_response['color']))
+                    break
+                    exit(0)
+                else:
+                    print(colored('Authentication failed.\nusername or password not matched!', 'red'))
+                    break
+                    exit(0)
+            # exit
+            elif choice == '9':
+                connection.sendall(serializer(choice=choice,
+                                              username=us["username"],
+                                              )
+                                   )
+                print("Bye!")
+                break
+                exit(0)
+            else:
+                print(colored("Unknown command!", 'red'))
+                break
+                exit(0)
+    else:
+        exit(0)
+
+
+if __name__ == '__main__':
+    main()
