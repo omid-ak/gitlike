@@ -15,7 +15,6 @@ _author = "omid"
 import pam
 import os
 import pwd
-import crypt
 import re
 
 class User():
@@ -57,7 +56,6 @@ class User():
             return False
 
     def create_user(self):
-        #encPass = crypt.crypt(self.password, "22")
         try:
             os.system(f"useradd -p $(openssl passwd -1 {self.password}) {self.username}")
         except:

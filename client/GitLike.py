@@ -242,7 +242,7 @@ def main():
                     print(colored(resp_msg, menu_response['color']))
                     print(colored(link, 'blue'))
                 else:
-                    print(colored(menu_response['msg'], menu_response['color']))
+                    print(colored(resp_msg, menu_response['color']))
                 c = input("Do you have any other request? (y/n): ")
                 if c == 'y':
                     continue
