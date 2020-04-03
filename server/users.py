@@ -57,9 +57,9 @@ class User():
             return False
 
     def create_user(self):
-        encPass = crypt.crypt(self.password, "22")
+        #encPass = crypt.crypt(self.password, "22")
         try:
-            os.system(f"useradd -p {encPass} {self.username}")
+            os.system(f"useradd -p $(openssl passwd -1 {self.password}) {self.username}")
         except:
             print(f"user {self.username} exists.")
 
@@ -73,7 +73,7 @@ class User():
     def delete_user(self):
 
         try:
-            os.system(f"userdel -r {self.username}")
+            os.system(f"userdel -fr {self.username}")
         except:
             print(f"user {self.username} not found")
 
