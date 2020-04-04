@@ -1,5 +1,5 @@
 """
-v1.0
+v1.0.1
 GitLike Project
 Copyright (C) 2020 GitLike. All Rights Reserved.
 Licence: GPL3
@@ -23,6 +23,7 @@ from threading import Thread
 import pickle
 import os
 import logging
+
 
 # check for root
 if os.geteuid() != 0:
@@ -340,8 +341,8 @@ def enrollment(**kwargs):
     #sign in
     user = User(kwargs['username'], kwargs['password'])
     if kwargs['choice'] == '1':
-        if user.user_existence() and os.path.exists(f"/repositories/{user.username}"):
-            if user.user_authentication():
+        if user.user_existence() and user.username in config.group_members:
+            if user.user_authentication() :
                 response_message    = f"Welcome {user.username}."
                 color               = Text_Color.SUCCESS.value
                 CONTINUE            = True
@@ -358,7 +359,7 @@ def enrollment(**kwargs):
     elif kwargs['choice'] == '2':
         if user.username_validation() is True:
             if user.password_match():
-                if user.user_existence() or os.path.exists(f"/repositories/{user.username}"):
+                if user.user_existence():
                     response_message    = "user exists"
                     color               = Text_Color.ERROR.value
                     CONTINUE            = False
