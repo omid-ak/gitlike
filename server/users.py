@@ -1,5 +1,5 @@
 """
-v1.0
+v1.0.1
 GiLike Project
 Copyleft (C) 2020 GitLike. All Rights Reserved.
 Licence: GPL3
@@ -61,10 +61,6 @@ class User():
         except:
             print(f"user {self.username} exists.")
 
-        if os.path.exists(f"/repositories/{self.username}") is False:
-            os.mkdir(f"/repositories/{self.username}")
-        if os.path.exists(f"/repositories/{self.username}/contributors/") is False:
-            os.mkdir(f"/repositories/{self.username}/contributors/")
         if os.path.exists(f"/home/{self.username}") is False:
             os.mkdir(f"/home/{self.username}")
 
@@ -75,14 +71,11 @@ class User():
         except:
             print(f"user {self.username} not found")
 
-        try:
-            os.system(f"rm -rf /repositories/{self.username}")
-        except:
-            print(f"directory for user {self.username} not found")
-        try:
-            os.system(f"rm -rf /home/{self.username}")
-        except:
-            print(f"an issue occure while removing {self.username}")
+        if os.path.exists(f"/home/{self.username}"):
+            try:
+                os.system(f"rm -rf /home/{self.username}")
+            except:
+                print(f"an issue occure while removing {self.username}")
 
     def change_shell(self, shell):
         os.system(f"usermod --shell {shell} {self.username}")

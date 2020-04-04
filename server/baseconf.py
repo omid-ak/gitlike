@@ -1,5 +1,5 @@
 """
-v1.0
+v1.0.1
 GiLike Project
 Copyleft (C) 2020 omid akhgary. All Rights Reserved.
 Licence: GPL3
