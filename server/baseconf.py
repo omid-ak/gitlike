@@ -52,7 +52,11 @@ class Group:
             self.grp_existence_status = True
         else:
             self.grp_existence_status = False
-    
+
+    def get_group_members(self):
+        return grp.getgrnam(self.grp_name).gr_mem 
+
+
     def create_group(self):
         if self.grp_existence_status is False:
             os.system(f"groupadd {self.grp_name}")
@@ -69,6 +73,7 @@ class Config:
         self.dependencies_installation_status   = None
         self.shell_name                         = None
         self.group_name                         = None
+        self.group_members                      = list()
         self.detect_distro_type()
         self.calc_ip()
         self.init_repo_dir()
@@ -92,6 +97,7 @@ class Config:
         group = Group('git_users')
         group.create_group()
         self.group_name = group.grp_name
+        self.group_members = group.get_group_members()
 
     def calc_ip(self):
         self.ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
