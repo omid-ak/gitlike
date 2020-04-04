@@ -1,5 +1,5 @@
 """
-v1.0
+v1.0.1
 GitLike Project
 Copyleft (C) 2020 GitLike. All Rights Reserved.
 Licence: GPL3
