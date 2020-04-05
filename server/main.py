@@ -316,7 +316,7 @@ def handler(main_socket, client, addr):
                                 port=c_port,
                                 stage=Stages.PRE_ENROLLMENT.value,
                                 level=logging.WARNING,
-                                log_msg=f"Unknown Input Data On Stage {Stages.PRE_ENROLLMENT}"
+                                log_msg=f"Unknown Input Data On Stage {Stages.PRE_ENROLLMENT.value}"
                                )
             client.close()
             break
