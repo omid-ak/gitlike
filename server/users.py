@@ -87,15 +87,15 @@ class User():
         self.all_repos.clear()
         dirs = list()
         try:
-            dirs = os.listdir(f"/repositories/{self.username}/")
-            dirs.remove('contributors')
+            dirs = os.listdir(f"/home/{self.username}/")
 
         except:
             pass
 
         if len(dirs) > 0:
             for d in dirs:
-                self.all_repos.append(d)
+                if re.match("^[a-zA-Z0-9_-]+\.git$", d):
+                    self.all_repos.append(d)
         else:
             self.all_repos = []
 

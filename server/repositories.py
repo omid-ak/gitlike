@@ -35,7 +35,7 @@ class Repository(User, Group, Config):
 
     def get_repo_link_and_path_and_contributors_db(self):
         self.repo_main_path = f"/repositories/{self.repo_name}/"
-        self.repo_contributors_db = f"{self.repo_main_path}contributors/{self.repo_name}.json/"
+        self.repo_contributors_db = f"{self.repo_main_path}contributors/{self.repo_name}.json"
         self.repo_bare_files_path = f"{self.repo_main_path}{self.repo_name}.git/"
         self.home_user_path = f"/home/{self.username}/"
         self.repo_link = f"ssh://{self.username}@{self.ip}:{self.git_port}{self.home_user_path}{self.repo_name}{self.repo_name}.git/"
@@ -60,10 +60,10 @@ class Repository(User, Group, Config):
         self.contributors = {"owner": self.username, "others": []}
         pickle.dump(self.contributors, open(self.repo_contributors_db, "wb"))
 
-        os.system(f"git init --bare --share=group {self.repo_name} {self.repo_bare_files_path}")
+        os.system(f"git init --bare --share=group {self.repo_bare_files_path}")
         os.system(f"chgrp -R {self.group_name} {self.repo_bare_files_path}")
-        os.system(f"ln -s {self.repo_main_path} {self.home_user_repo_path}")
-        os.system(f"chown -R {self.username}:{self.group_name} {self.home_user_repo_path}")
+        os.system(f"ln -s {self.repo_bare_files_path} {self.home_user_path}")
+        os.system(f"chown -R {self.username}:{self.group_name} {self.home_user_path}")
         self.show_repos()
 
     def delete_repository(self):
@@ -93,6 +93,7 @@ class Repository(User, Group, Config):
 
         try:
             os.system(f"ln -s {self.repo_main_path} /home/{member}/")
+            os.system(f"chown -R {member}:{self.group_name} /home/{member}")
 
         except:
             print(f"an issue occured in {member} files for repository {self.repo_name}")
