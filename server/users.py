@@ -10,7 +10,7 @@ Email: omid7798@gmail.com
 Users controlling of Server Side part of GitLike Project.
 """
 
-_author = "omid"
+__author__ = 'omid <omid7798@gmail.com>'
 
 import pam
 import os
