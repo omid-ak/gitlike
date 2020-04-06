@@ -68,23 +68,23 @@ class Repository(User, Group, Config):
 
     def delete_repository(self):
         self.show_contributors()
+        # remove repo for owner
         try:
-            os.unlink(f"{self.home_user_path}{self.repo_name}")
+            os.unlink(f"{self.home_user_path}{self.repo_bare_files_path}")
         except:
             print(f"an issue occured while unlinking {self.home_user_repo_path}")
-
+        #remove repo for contributors
         if len(self.contributors.get("others")) > 0:
             for p in self.contributors.get("others"):
                 try:
-                    os.unlink(f"/home/{p}/{self.repo_name}")
+                    os.unlink(f"/home/{p}/{self.repo_bare_files_path}")
                 except :
                     print(f"an issue occured while unlinking {self.repo_name} for {p}")
-
+        # remove repo main files
         try:
             os.system(f"rm -rf {self.repo_main_path}")
         except :
             print(f"an issue occured while removing {self.repo_main_path}")
-            pass
 
     def add_contributor(self, member):
         self.show_contributors()
