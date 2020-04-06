@@ -38,7 +38,7 @@ class Repository(User, Group, Config):
         self.repo_contributors_db = f"{self.repo_main_path}contributors/{self.repo_name}.json"
         self.repo_bare_files_path = f"{self.repo_main_path}{self.repo_name}.git/"
         self.home_user_path = f"/home/{self.username}/"
-        self.repo_link = f"ssh://{self.username}@{self.ip}:{self.git_port}{self.home_user_path}{self.repo_name}{self.repo_name}.git/"
+        self.repo_link = f"ssh://{self.username}@{self.ip}:{self.git_port}{self.home_user_path}{self.repo_name}.git/"
 
     def repo_existence(self):
         if os.path.exists(self.repo_main_path) is True:

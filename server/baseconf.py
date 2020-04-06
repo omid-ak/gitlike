@@ -10,16 +10,23 @@ __author__ = 'omid <omid7798@gmail.com>'
 # Basic configuration of Server Side part of GitLike Project.
 
 from enum import Enum
-import platform
+import distro
 import socket
 import os
 import grp
 import subprocess
 
+
+
+
 """define multiple distribution and OS"""
 
-class Distro_Type(Enum):
-    REDHAT  = ['fedora', 'centos', 'suse']
+class Os_Type(Enum):
+    LINUX       = "Linux"
+    FREE_BSD    = "FreeBSD"
+    UNKNOW      = "unknown"
+class Linux_Distro_Type(Enum):
+    REDHAT  = ['fedora', 'centos']
     DEBIAN  = ['ubuntu', 'debian'] 
 
 
@@ -69,12 +76,14 @@ class Config:
         self.git_port                           = 22
         self.server_port                        = 7920
         self.company_name                       = None
+        self.group                              = None
+        self.shell                              = None
+        self.os_type                            = None
         self.distro_type                        = None
         self.dependencies_installation_status   = None
         self.shell_name                         = None
         self.group_name                         = None
-        self.group_members                      = list()
-        self.detect_distro_type()
+        self.detect_os_type()
         self.calc_ip()
         self.init_repo_dir()
         self.init_shell()
@@ -88,16 +97,15 @@ class Config:
 
     def init_shell(self):
         # init shell
-        shell = Shell("/bin/git-shell")
-        shell.create_shell()
-        self.shell_name = shell.sh_name
+        self.shell = Shell("/bin/git-shell")
+        self.shell.create_shell()
+        self.shell_name = self.shell.sh_name
 
     def init_group(self):
         # init group
-        group = Group('git_users')
-        group.create_group()
-        self.group_name = group.grp_name
-        self.group_members = group.get_group_members()
+        self.group = Group('git_users')
+        self.group.create_group()
+        self.group_name = self.group.grp_name
 
     def calc_ip(self):
         self.ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
@@ -110,11 +118,14 @@ class Config:
 
     def install_dependencies(self):
         if self.dependencies_installation_status is False:
-            if self.distro_type.name is Distro_Type.REDHAT.name:
-                os.system('yum update -y && yum install git -y')
-            if self.distro_type.name is Distro_Type.DEBIAN.name:
-                os.system('apt update -y && apt install git -y')
-
+            if self.os_type.name is Os_Type.LINUX:
+                if self.distro_type.name is Linux_Distro_Type.REDHAT.name:
+                    os.system('yum update -y && yum install git -y')
+                if self.distro_type.name is Linux_Distro_Type.DEBIAN.name:
+                    os.system('apt update -y && apt install git -y')
+            elif self.os_type.name is Os_Type.FREE_BSD:
+                os.system("pkg update -y && pkg install git -y")
+    
     def firewall_check(self):
         try:
             res = subprocess.check_output(f"iptables -nL | grep 'tcp spt:{self.server_port}'", shell=True)
@@ -130,10 +141,18 @@ class Config:
         if self.firewall_check() is False:
             os.system(f"iptables -A INPUT -p tcp --sport {self.server_port} -j ACCEPT")
 
-    def detect_distro_type(self):
-        distro_found = platform.linux_distribution()[0]
+    def detect_os_type(self):
+        os_type = os.uname().sysname
+        if os_type == Os_Type.LINUX.value:
+            self.os_type = Os_Type.LINUX
+            distro_type = distro.distro_release_info().get("id")
 
-        for distrotypes in Distro_Type:
-            for entry in distrotypes.value:
-                if entry in distro_found.lower():
-                    self.distro_type = distrotypes
+            for distrotypes in Linux_Distro_Type:
+                for entry in distrotypes.value:
+                    if entry in distro_type.lower():
+                        self.distro_type = distrotypes
+        elif os_type == Os_Type.FREE_BSD.value:
+            self.os_type = Os_Type.FREE_BSD
+        else:
+            self.os_type = Os_Type.UNKNOW
+
