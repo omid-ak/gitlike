@@ -92,7 +92,7 @@ class Repository(User, Group, Config):
         pickle.dump(self.contributors, open(self.repo_contributors_db, "wb"))
 
         try:
-            os.system(f"ln -s {self.repo_main_path} /home/{member}/")
+            os.system(f"ln -s {self.repo_bare_files_path} /home/{member}/")
             os.system(f"chown -R {member}:{self.group_name} /home/{member}")
 
         except:
