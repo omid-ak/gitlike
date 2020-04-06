@@ -103,7 +103,7 @@ class Repository(User, Group, Config):
         self.contributors["others"].remove(member)
         pickle.dump(self.contributors, open(self.repo_contributors_db, "wb"))
         try:
-            os.unlink(f"/home/{member}/{self.repo_bare_files_path}")
+            os.unlink(f"/home/{member}/{self.repo_name}.git")
         except:
             print(f"repo {self.repo_name} not found for user {member}")
 
