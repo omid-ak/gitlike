@@ -13,7 +13,7 @@ Main Module To Run
 
 __author__ = "omid <omid7798@gmail.com>"
 
-from baseconf import Config
+from baseconf import Config, Os_Type
 from users import User
 from repositories import Repository
 from _logging import Logger, Log_Type
@@ -341,7 +341,8 @@ def enrollment(**kwargs):
     #sign in
     user = User(kwargs['username'], kwargs['password'])
     if kwargs['choice'] == '1':
-        if user.user_existence() and user.username in config.group_members:
+        group_memebers = config.group.get_group_members()
+        if user.user_existence() and user.username in group_memebers:
             if user.user_authentication() :
                 response_message    = f"Welcome {user.username}."
                 color               = Text_Color.SUCCESS.value
@@ -589,6 +590,13 @@ def main():
     logger.main_logger(log_type=Log_Type.START)
     # Base config
     print('initializing...')
+    if config.os_type.name is Os_Type.UNKNOW.name:
+        print("Unknown Operation System .!")
+        logger.main_logger(Log_Type=Log_Type.START, log_msg="Unknown Operating System", level=logging.ERROR)
+        exit(1)
+
+    print(f"{config.os_type.value} Operating System")
+
     config.company_name = input("Entenr Your Company Name: ")
     print('checking for dependencies...')
 
@@ -598,6 +606,7 @@ def main():
         if answer is "y" or answer is "Y":
             config.install_dependencies()
             logger.main_logger(Log_Type=Log_Type.START, log_msg="Dependencies Installed Successfully.")
+
         elif answer is "n" or answer is "N":
             print("Operation aborted")
             logger.main_logger(Log_Type=Log_Type.START, log_msg="Dependencies Installation Operation Aborted.")
