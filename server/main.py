@@ -14,7 +14,7 @@ Main Module To Run
 __author__ = "omid <omid7798@gmail.com>"
 
 from baseconf import Config, Os_Type, Linux_Distro_Type
-from users import User
+from users import User, User_Types
 from repositories import Repository
 from _logging import Logger, Log_Type
 from enum import Enum
@@ -45,10 +45,10 @@ class Text_Color(Enum):
 
 # Determine Logging variant Stages.
 class Stages(Enum):
-    PRE_ENROLLMENT  = "pre_enrollment"
-    ENROLLMENT      = "enrollment"
-    POST_ENROLLMENT = "post_enrollment"
-
+    PRE_ENROLLMENT          = "pre_enrollment"
+    ENROLLMENT              = "enrollment"
+    USER_POST_ENROLLMENT    = "post_enrollment"
+    ADMIN_POST_ENROLLMENT   = "admin_post_enrollment"
 # Enrollment Menu Variant Stages
 Enrollment_Stages = {
                         "1": "sign_in",
@@ -57,7 +57,7 @@ Enrollment_Stages = {
                     }
 
 # Main Menu(Post Enrollment Menu) Variant Stages.
-Post_Enrollment_stages = {
+User_Post_Enrollment_Stages = {
                             "1": "show my repos",
                             "2": "create repo",
                             "3": "delete repo",
@@ -67,8 +67,13 @@ Post_Enrollment_stages = {
                             "7": "remove contributor from repo",
                             "8": "delete account",
                             "9": "exit"
-                         }
+                            }
 
+Admin_Post_Enrollment_stages = {
+                            "1": "show all repos",
+                            "2": "show repo contributors",
+                            "3": "exit"
+                            }
 
 def serializer(**kwargs):
     return pickle.dumps(kwargs)
@@ -97,7 +102,8 @@ sent data format:
 {
     'msg'       :#
     'continues' :#Trues/False    
-    color       :# --> message color.   
+    'color'     :# --> message color.
+    'user_type' :# --> User_Types  
 }
 
 then check for qualification if user qualified:
@@ -203,80 +209,140 @@ def handler(main_socket, client, addr):
 
                     while True:
                         menu_rec_data = client.recv(4096)
+                        # users part
                         try:
                             # get post enrollment data
                             rec_data_2 = deserializer(menu_rec_data)
-
-                            logger.main_logger(
-                                log_type=Log_Type.RECEIVED_DATA,
-                                ip=c_ip,
-                                port=c_port,
-                                data=rec_data_2,
-                                stage=Stages.POST_ENROLLMENT.value
-                            )
-                            # exit in stage enrollment
-                            if rec_data_2['choice'] == '9':
+                            if enrollment_return["user_type"] is User_Types.GIT_USER.value:
 
                                 logger.main_logger(
-                                    log_type=Log_Type.RUNTIME_ACTIONS,
+                                    log_type=Log_Type.RECEIVED_DATA,
                                     ip=c_ip,
                                     port=c_port,
-                                    stage=Stages.POST_ENROLLMENT.value,
-                                    action=Post_Enrollment_stages.get(rec_data_2.get('choice')),
+                                    data=rec_data_2,
+                                    stage=Stages.USER_POST_ENROLLMENT.value
+                                )
+                                # exit in stage enrollment
+                                if rec_data_2['choice'] == '9':
+
+                                    logger.main_logger(
+                                        log_type=Log_Type.RUNTIME_ACTIONS,
+                                        ip=c_ip,
+                                        port=c_port,
+                                        stage=Stages.USER_POST_ENROLLMENT.value,
+                                        action=User_Post_Enrollment_Stages.get(rec_data_2.get('choice')),
+                                        username=rec_data_2.get('username'),
+                                        log_msg="App Terminated"
+                                    )
+
+                                    client.close()
+                                    break
+
+                                choose_return = choose(
+                                    choice=rec_data_2.get('choice'),
                                     username=rec_data_2.get('username'),
-                                    log_msg="App Terminated"
+                                    password=rec_data_2.get('password'),
+                                    repo_name=rec_data_2.get('repo_name', None),
+                                    member=rec_data_2.get('member', None),
+                                    delete_response=rec_data_2.get('delete_response', None)
                                 )
 
-                                client.close()
-                                break
+                                logger.main_logger(
+                                                    log_type=Log_Type.RUNTIME_ACTIONS,
+                                                    ip=c_ip,
+                                                    port=c_port,
+                                                    stage=Stages.USER_POST_ENROLLMENT.value,
+                                                    action=User_Post_Enrollment_Stages.get(rec_data_2.get('choice')),
+                                                    username=rec_data_2.get('username'),
+                                                    log_msg=choose_return.get('msg')
+                                                    )
 
-                            choose_return = choose(
-                                choice=rec_data_2.get('choice'),
-                                username=rec_data_2.get('username'),
-                                password=rec_data_2.get('password'),
-                                repo_name=rec_data_2.get('repo_name', None),
-                                member=rec_data_2.get('member', None),
-                                delete_response=rec_data_2.get('delete_response', None)
-                            )
+                                response = {
+                                            'msg'   : choose_return['msg'],
+                                            'color' : choose_return['color']
+                                            }
 
-                            logger.main_logger(
-                                                log_type=Log_Type.RUNTIME_ACTIONS,
-                                                ip=c_ip,
-                                                port=c_port,
-                                                stage=Stages.POST_ENROLLMENT.value,
-                                                action=Post_Enrollment_stages.get(rec_data_2.get('choice')),
-                                                username=rec_data_2.get('username'),
-                                                log_msg=choose_return.get('msg')
-                                                )
+                                logger.main_logger(
+                                                    log_type=Log_Type.SENT_DATA,
+                                                    ip=c_ip,
+                                                    port=c_port,
+                                                    data=response,
+                                                    stage=Stages.USER_POST_ENROLLMENT.value
+                                                    )
 
-                            response = {
-                                        'msg'   : choose_return['msg'],
-                                        'color' : choose_return['color']
-                                        }
+                                client.send(serializer(**response))
+                                if rec_data_2['choice'] == '8':
+                                    client.close()
+                                    break
+                            # Admin part
+                            elif enrollment_return["user_type"] is User_Types.ADMIN.value:
 
-                            logger.main_logger(
-                                                log_type=Log_Type.SENT_DATA,
-                                                ip=c_ip,
-                                                port=c_port,
-                                                data=response,
-                                                stage=Stages.POST_ENROLLMENT.value
-                                                )
+                                logger.main_logger(
+                                    log_type=Log_Type.RECEIVED_DATA,
+                                    ip=c_ip,
+                                    port=c_port,
+                                    data=rec_data_2,
+                                    stage=Stages.ADMIN_POST_ENROLLMENT.value
+                                )
+                                # exit in stage enrollment
+                                if rec_data_2['choice'] == '3':
 
-                            client.send(serializer(**response))
-                            if rec_data_2['choice'] == '8':
-                                client.close()
-                                break
+                                    logger.main_logger(
+                                        log_type=Log_Type.RUNTIME_ACTIONS,
+                                        ip=c_ip,
+                                        port=c_port,
+                                        stage=Stages.ADMIN_POST_ENROLLMENT.value,
+                                        action=Admin_Post_Enrollment_stages.get(rec_data_2.get('choice')),
+                                        username=rec_data_2.get('username'),
+                                        log_msg="App Terminated"
+                                    )
+
+                                    client.close()
+                                    break
+
+                                admin_choose_return = admin_choose(
+                                    choice=rec_data_2.get('choice'),
+                                    repo_name=rec_data_2.get('repo_name', None),
+                                )
+
+                                logger.main_logger(
+                                                    log_type=Log_Type.RUNTIME_ACTIONS,
+                                                    ip=c_ip,
+                                                    port=c_port,
+                                                    stage=Stages.ADMIN_POST_ENROLLMENT.value,
+                                                    action=Admin_Post_Enrollment_stages.get(rec_data_2.get('choice')),
+                                                    username=rec_data_2.get('username'),
+                                                    log_msg=admin_choose_return.get('msg')
+                                                    )
+
+                                response = {
+                                            'msg'   : admin_choose_return['msg'],
+                                            'color' : admin_choose_return['color']
+                                            }
+
+                                logger.main_logger(
+                                                    log_type=Log_Type.SENT_DATA,
+                                                    ip=c_ip,
+                                                    port=c_port,
+                                                    data=response,
+                                                    stage=Stages.ADMIN_POST_ENROLLMENT.value
+                                                    )
+
+                                client.send(serializer(**response))
 
                         except Exception:
-
+                            if enrollment_return['user_type'] is User_Types.GIT_USER.value:
+                                stage = Stages.USER_POST_ENROLLMENT.value
+                            elif enrollment_return['user_type'] is User_Types.ADMIN.value:
+                                stage = Stages.ADMIN_POST_ENROLLMENT.value
                             logger.main_logger(
                                                 log_type=Log_Type.RECEIVED_DATA,
                                                 ip=c_ip,
                                                 port=c_port,
-                                                stage=Stages.POST_ENROLLMENT.value,
+                                                stage=stage,
                                                 data=menu_rec_data,
                                                 level=logging.WARNING,
-                                                log_msg=f"Unknown Input Data in stage {Stages.POST_ENROLLMENT.value}!"
+                                                log_msg=f"Unknown Input Data in stage {stage}!"
                                             )
                             client.close()
                             break
@@ -333,19 +399,31 @@ def enrollment(**kwargs):
 
     """
 
-    global response_message, color, CONTINUE
+    global response_message, color, CONTINUE, user_type
 
     CONTINUE            = False
-
+    user_type           = None
     #sign in
     user = User(kwargs['username'], kwargs['password'])
     if kwargs['choice'] == '1':
         group_memebers = config.group.get_group_members()
-        if user.user_existence() and user.username in group_memebers:
+        if user.user_existence():
             if user.user_authentication() :
-                response_message    = f"Welcome {user.username}."
-                color               = Text_Color.SUCCESS.value
-                CONTINUE            = True
+                if user.is_admin():
+                    response_message    = f"Welcome {user.username}."
+                    color               = Text_Color.SUCCESS.value
+                    CONTINUE            = True
+                    user_type           = User_Types.ADMIN.value
+                elif user.username in group_memebers:
+                    response_message    = f"Welcome {user.username}."
+                    color               = Text_Color.SUCCESS.value
+                    CONTINUE            = True
+                    user_type           = User_Types.GIT_USER.value
+                else:
+                    response_message    = f"Invalid User Access Denied!."
+                    color               = Text_Color.ERROR.value
+                    CONTINUE            = False
+
             else:
                 response_message    = "Authentication Failed !"
                 color               = Text_Color.ERROR.value
@@ -378,8 +456,48 @@ def enrollment(**kwargs):
             color               = Text_Color.ERROR.value
             CONTINUE            = False
 
-    return {'msg': response_message, 'continue': CONTINUE, 'color': color}
+    return {'msg': response_message, 'continue': CONTINUE, 'color': color, 'user_type': user_type}
 
+
+def admin_choose(**kwargs):
+
+    """
+    kwargs: {
+            'choice':# --> 1/.../3
+            'repo_name'
+            }
+    """
+    global response_message, color, choice
+
+    choice = kwargs.get('choice')
+
+    # show all repos
+    if choice == '1':
+        all_repos = Repository.show_all_repos()
+        if len(all_repos) > 0:
+            response_message    = all_repos
+            color               = Text_Color.SUCCESS.value
+
+        else:
+            response_message    = "no repository fouond"
+            color               = Text_Color.WARNING.value
+
+    # show repo memebers
+    elif choice == '2':
+        repository = Repository(kwargs.get('repo_name'))
+        if len(repository.show_contributors()) > 0:
+            response_message = repository.show_contributors()
+            color            = Text_Color.SUCCESS.value
+
+        else:
+            response_message    = f"there are no contributors for repository {repository.repo_name}."
+            color               = Text_Color.WARNING.value
+
+    else:
+        response_message    = 'Unknown command !'
+        color               = Text_Color.ERROR.value
+
+    return {'msg': response_message, 'color': color}
 
 
 def choose(**kwargs):
@@ -406,8 +524,7 @@ def choose(**kwargs):
         user.show_repos()
 
         if len(user.all_repos) > 0:
-            repos               = ",".join(user.all_repos)
-            response_message    = repos
+            response_message    = user.all_repos
             color               = Text_Color.SUCCESS.value
         else:
             response_message    = f"there are no repositories for user {user.username}."
@@ -419,7 +536,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name, username, password, config.group_name)
+        repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
 
         if repository.repo_name_validation():
             if repository.repo_existence():
@@ -446,7 +563,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name, username, password, config.group_name)
+        repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
 
         if repository.repo_existence():
             repository.show_contributors()
@@ -470,7 +587,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name, username, password, config.group_name)
+        repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
         if repository.repo_existence():
             response_message = {"resp_msg": "clone or remote with ssh: ", "link": repository.repo_link}
             color            = None
@@ -485,7 +602,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name, username, password, config.group_name)
+        repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
         repository.show_contributors()
 
         if len(repository.contributors) > 0:
@@ -502,7 +619,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name, username, password, config.group_name)
+        repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
         member = kwargs['member']
         if repository.repo_existence():
             member_user = User(member, '')
@@ -526,7 +643,7 @@ def choose(**kwargs):
         password = kwargs['password']
         repo_name = kwargs['repo_name']
         member = kwargs['member']
-        repository = Repository(repo_name, username, password, config.group_name)
+        repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
         if repository.repo_existence():
             member_user = User(member, '')
             if member_user.user_existence():
