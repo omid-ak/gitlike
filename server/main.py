@@ -13,7 +13,7 @@ Main Module To Run
 
 __author__ = "omid <omid7798@gmail.com>"
 
-from baseconf import Config, Os_Type
+from baseconf import Config, Os_Type, Linux_Distro_Type
 from users import User
 from repositories import Repository
 from _logging import Logger, Log_Type
@@ -173,7 +173,7 @@ def handler(main_socket, client, addr):
                                                 choice=rec_data_1.get('choice'),
                                                 username=rec_data_1.get('username'),
                                                 password=rec_data_1.get('password'),
-                                               )
+                                            )
 
 
 
@@ -187,7 +187,7 @@ def handler(main_socket, client, addr):
                                     action=Enrollment_Stages.get(rec_data_1.get('choice')),
                                     username=rec_data_1.get('username'),
                                     log_msg=enrollment_return.get("msg")
-                                   )
+                                )
 
                 logger.main_logger(
                                     log_type=Log_Type.SENT_DATA,
@@ -277,7 +277,7 @@ def handler(main_socket, client, addr):
                                                 data=menu_rec_data,
                                                 level=logging.WARNING,
                                                 log_msg=f"Unknown Input Data in stage {Stages.POST_ENROLLMENT.value}!"
-                                               )
+                                            )
                             client.close()
                             break
                 else:
@@ -290,7 +290,7 @@ def handler(main_socket, client, addr):
                                         stage=Stages.ENROLLMENT.value,
                                         action=Enrollment_Stages.get(rec_data_1.get('choice')),
                                         log_msg=enrollment_return.get('msg')
-                                       )
+                                    )
                     client.close()
                     break
 
@@ -317,10 +317,9 @@ def handler(main_socket, client, addr):
                                 stage=Stages.PRE_ENROLLMENT.value,
                                 level=logging.WARNING,
                                 log_msg=f"Unknown Input Data On Stage {Stages.PRE_ENROLLMENT.value}"
-                               )
+                            )
             client.close()
             break
-
     client.close()
 
 def enrollment(**kwargs):
@@ -590,10 +589,15 @@ def main():
     logger.main_logger(log_type=Log_Type.START)
     # Base config
     print('initializing...')
-    if config.os_type.name is Os_Type.UNKNOW.name:
+    if config.os_type.name is Os_Type.UNKNOWN.name:
         print("Unknown Operation System .!")
-        logger.main_logger(Log_Type=Log_Type.START, log_msg="Unknown Operating System", level=logging.ERROR)
+        logger.main_logger(Log_Type=Log_Type.START, log_msg="Unknown Operating System.", level=logging.ERROR)
         exit(1)
+    if config.os_type.name is Os_Type.LINUX.name:
+        if config.distro_type.name is Linux_Distro_Type.UNKNOWN.name:
+            print("Unknown Linux Distribution.!")
+            logger.main_logger(Log_Type=Log_Type.START, log_msg="Unknown Linux Distribution.", level=logging.ERROR)
+            exit(1)
 
     print(f"{config.os_type.value} Operating System")
 
