@@ -1,5 +1,5 @@
 """
-v1.0.1
+v1.0.2
 GitLike Project
 Copyleft (C) 2020 GitLike. All Rights Reserved.
 Licence: GPL3
@@ -18,5 +18,5 @@ __all__ = ["repositories", "_logging", "baseconf", "users"]
 
 __author__  = "omid akhgary <omid7798@gmail.com>"
 __status__  = "Production"
-__date__    = "05 Apr 2020"
-__version__ = "1.0.1"
+__date__    = "09 Apr 2020"
+__version__ = "1.0.2"
