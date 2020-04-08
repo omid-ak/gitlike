@@ -1,5 +1,5 @@
 """
-v1.0.1
+v1.0.2
 GitLike Project
 Copyright (C) 2020 GitLike. All Rights Reserved.
 Licence: GPL3
@@ -520,6 +520,7 @@ def admin_choose(**kwargs):
 
         else:
             response_message        = f"repository {repository.repo_name} not found"
+            color                   = Text_Color.ERROR.value
 
     # show all users
     elif choice == '3':
