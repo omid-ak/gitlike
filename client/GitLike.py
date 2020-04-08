@@ -17,6 +17,7 @@ from sys import argv
 from time import sleep
 from pyfiglet import Figlet 
 from termcolor import colored
+from enum import Enum
 
 class User_Types(Enum):
     ADMIN       = "admin"
@@ -47,7 +48,9 @@ def admin_menu(user, company_name):
 
             '1-show all repositories\n'
             '2-show repository memebers\n'
-            '3-exit\n'
+            '3-show all users\n'
+            '4-show user repositories\n'
+            '5-exit\n'
         )
 
 def menu(user, company_name):
@@ -130,15 +133,17 @@ def main():
     if CONTINUE:
 
         sleep(2)
-        while True:
-            
-            if sign_response['user_type'] is User_Types.ADMIN.value:
-                global admin_menu_response, choice
+        # admin part
+        if sign_response['user_type'] == User_Types.ADMIN.value:
+
+            global admin_menu_response, choice_admin
+            while True:
+                admin_menu_response = None
                 admin_menu(us['username'], company_name)
-                choice = input('choice: ')
+                choice_admin = input('choice: ')
                 # show all repos
-                if choice == '1':
-                    connection.sendall(serializer(choice=choice, username=us['username']))
+                if choice_admin == '1':
+                    connection.sendall(serializer(choice=choice_admin, username=us['username']))
                     print("pleaase wait...")
                     admin_menu_response = deserializer(connection.recv(4096))
                     repos_resp = admin_menu_response['msg']
@@ -162,10 +167,10 @@ def main():
                         exit(0)
 
                 # show repo memebers
-                elif choice == '2':
+                elif choice_admin == '2':
                     repo_name = input("Enter repository name: ")
 
-                    connection.sendall(serializer(choice=choice,
+                    connection.sendall(serializer(choice=choice_admin,
                                                 username=us['username'],
                                                 repo_name=repo_name
                                                 )
@@ -194,10 +199,67 @@ def main():
                         break
                         exit(0)
 
+                #show all users
+                elif choice_admin == '3':
+                    connection.sendall(serializer(choice=choice_admin, username=us['username']))
+                    print("pleaase wait...")
+                    admin_menu_response = deserializer(connection.recv(4096))
+                    users_resp = admin_menu_response['msg']
+
+                    if isinstance(users_resp, list):
+                        for user in users_resp:
+                            print(colored(user, admin_menu_response['color']))
+                    else:
+                        print(colored(users_resp, admin_menu_response['color']))
+
+                    c = input("Do you have any other request? (y/n): ")
+                    if c == 'y':
+                        continue
+                    elif c == 'n':
+                        print('Bye!')
+                        break
+                        exit(0)
+                    else:
+                        print(colored("Unknown command!", 'red'))
+                        break
+                        exit(0)
+
+                # show user repos
+                elif choice_admin == '4':
+                    git_username = input("Enter repository name: ")
+
+                    connection.sendall(serializer(choice=choice_admin,
+                                                username=us['username'],
+                                                git_username=git_username
+                                                )
+                                    )
+
+                    print("please wait ...")
+
+                    admin_menu_response = deserializer(connection.recv(4096))
+                    repos_resp = admin_menu_response['msg']
+                    if isinstance(repos_resp, list):
+                        for repo in repos_resp:
+                            print(colored(repos_resp, admin_menu_response['color']))
+                    else:
+                        print(colored(repos_resp, admin_menu_response['color']))
+
+                    c = input("Do you have any other request? (y/n): ")
+                    if c == 'y':
+                        continue
+                    elif c == 'n':
+                        print('Bye!')
+                        break
+                        exit(0)
+                    else:
+                        print(colored("Unknown command!", 'red'))
+                        break
+                        exit(0)
+
                 # exit
-                elif choice == '3':
-                    connection.sendall(serializer(choice=choice,
-                                                  username=us["username"],
+                elif choice_admin == '5':
+                    connection.sendall(serializer(choice=choice_admin,
+                                                    username=us["username"],
                                                 )
                                     )
                     print("Bye!")
@@ -207,12 +269,16 @@ def main():
                     print(colored("Unknown command!", 'red'))
                     break
                     exit(0)
-            elif sign_response['user_type'] is User_Types.GIT_USER.value:
-                global menu_response, choice
+        
+        # users part
+        elif sign_response['user_type'] == User_Types.GIT_USER.value:
+
+            global menu_response, choice
+            while True:
                 menu_response = None
                 menu(us['username'], company_name)
                 choice = input('choice: ')
-               
+                
                 # show my repos
                 if choice == '1':
                     connection.sendall(serializer(choice=choice,
@@ -482,8 +548,8 @@ def main():
                     print(colored("Unknown command!", 'red'))
                     break
                     exit(0)
-    else:
-        exit(0)
+        else:
+            exit(0)
 
 
 if __name__ == '__main__':
