@@ -24,9 +24,9 @@ import subprocess
 class Os_Type(Enum):
     LINUX       = "Linux"
     FREE_BSD    = "FreeBSD"
-    UNKNOWN      = "Unknown"
+    UNKNOWN     = "Unknown"
 class Linux_Distro_Type(Enum):
-    REDHAT  = ['Fedora', 'Centos', 'Centos Linux']
+    REDHAT  = ['Fedora', 'CentOS', 'CentOS Linux']
     DEBIAN  = ['Ubuntu', 'Debian', 'Debian GNU/Linux'] 
     UNKNOWN = "Unknown"
 
