@@ -1,5 +1,5 @@
 """
-v1.0
+v1.0.1
 GitLike Project
 Copyleft (C) 2020 GitLike. All Rights Reserved.
 Licence: GPL3
@@ -182,8 +182,9 @@ def main():
                     contrbs = admin_menu_response['msg']
                     if isinstance(contrbs, dict):
                         print(colored(contrbs.get("owner"), "magenta"))
-                        for con in contrbs.get("others"):
-                            print(colored(con, admin_menu_response['color']))
+                        if contrbs.get('others'):
+                            for con in contrbs.get("others"):
+                                print(colored(con, admin_menu_response['color']))
                     else:
                         print(colored(contrbs, admin_menu_response['color']))
 
@@ -240,7 +241,7 @@ def main():
                     repos_resp = admin_menu_response['msg']
                     if isinstance(repos_resp, list):
                         for repo in repos_resp:
-                            print(colored(repos_resp, admin_menu_response['color']))
+                            print(colored(repo, admin_menu_response['color']))
                     else:
                         print(colored(repos_resp, admin_menu_response['color']))
 
@@ -430,8 +431,9 @@ def main():
                     contrbs = menu_response['msg']
                     if isinstance(contrbs, dict):
                         print(colored(contrbs.get("owner"), "magenta"))
-                        for con in contrbs.get("others"):
-                            print(colored(con, menu_response['color']))
+                        if contrbs.get("others"):
+                            for con in contrbs.get("others"):
+                                print(colored(con, menu_response['color']))
                     else:
                         print(colored(contrbs, menu_response['color']))
 
