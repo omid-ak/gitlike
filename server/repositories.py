@@ -21,9 +21,8 @@ import pickle
 class Repository(User, Group, Config):
     def __init__(self, repo_name, **kwargs):
         self.repo_name = repo_name
-        if kwargs:
-            User.__init__(self, kwargs.get('username'), kwargs.get('password'))
-            Group.__init__(self, kwargs.get('group_name'))
+        User.__init__(self, kwargs.get('username', None), kwargs.get('password', None))
+        Group.__init__(self, kwargs.get('group_name', None))
         Config.__init__(self)
         self.repo_link = None
         self.repo_main_path = None
@@ -43,6 +42,11 @@ class Repository(User, Group, Config):
 
     def repo_existence(self):
         if os.path.exists(self.repo_main_path) is True:
+            return True
+        else:
+            return False
+    def user_repo_existence(self):
+        if os.path.exists(f"{self.home_user_path}/{self.repo_name}.git"):
             return True
         else:
             return False

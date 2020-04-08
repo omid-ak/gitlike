@@ -72,7 +72,9 @@ User_Post_Enrollment_Stages = {
 Admin_Post_Enrollment_stages = {
                             "1": "show all repos",
                             "2": "show repo contributors",
-                            "3": "exit"
+                            "3": "show all users",
+                            "4": "show user repos",
+                            "5": "exit"
                             }
 
 def serializer(**kwargs):
@@ -108,14 +110,31 @@ sent data format:
 
 then check for qualification if user qualified:
 post enrollment stage:
+then check if user is git_user:
 received data format:
 {
-    choice:#, --> 1/../9 --> Post Enrollment Stages
+    choice:#, --> 1/../9 --> User Post Enrollment Stages
     username:#,
     password:#,
     member:#/emp,
     repo_name:#/emp,
     delete_response:#/emp
+}
+
+sent data:
+
+{
+    "msg"       : #
+    "color"     : # --> message color
+}
+
+elif user is admin:
+
+{
+    choice:#, --> 1/../5 --> Admin Post Enrollment Stages
+    username:#, --> admin user
+    git_user:#,
+    repo_name:#/emp,
 }
 
 sent data:
@@ -213,7 +232,7 @@ def handler(main_socket, client, addr):
                         try:
                             # get post enrollment data
                             rec_data_2 = deserializer(menu_rec_data)
-                            if enrollment_return["user_type"] is User_Types.GIT_USER.value:
+                            if enrollment_return["user_type"] == User_Types.GIT_USER.value:
 
                                 logger.main_logger(
                                     log_type=Log_Type.RECEIVED_DATA,
@@ -275,7 +294,7 @@ def handler(main_socket, client, addr):
                                     client.close()
                                     break
                             # Admin part
-                            elif enrollment_return["user_type"] is User_Types.ADMIN.value:
+                            elif enrollment_return["user_type"] == User_Types.ADMIN.value:
 
                                 logger.main_logger(
                                     log_type=Log_Type.RECEIVED_DATA,
@@ -285,7 +304,7 @@ def handler(main_socket, client, addr):
                                     stage=Stages.ADMIN_POST_ENROLLMENT.value
                                 )
                                 # exit in stage enrollment
-                                if rec_data_2['choice'] == '3':
+                                if rec_data_2['choice'] == '5':
 
                                     logger.main_logger(
                                         log_type=Log_Type.RUNTIME_ACTIONS,
@@ -302,7 +321,10 @@ def handler(main_socket, client, addr):
 
                                 admin_choose_return = admin_choose(
                                     choice=rec_data_2.get('choice'),
+                                    username=rec_data_2.get('username'),
+                                    git_username=rec_data_2.get('git_username', None),
                                     repo_name=rec_data_2.get('repo_name', None),
+
                                 )
 
                                 logger.main_logger(
@@ -406,7 +428,7 @@ def enrollment(**kwargs):
     #sign in
     user = User(kwargs['username'], kwargs['password'])
     if kwargs['choice'] == '1':
-        group_memebers = config.group.get_group_members()
+        git_users = config.group.get_group_members()
         if user.user_existence():
             if user.user_authentication() :
                 if user.is_admin():
@@ -414,7 +436,7 @@ def enrollment(**kwargs):
                     color               = Text_Color.SUCCESS.value
                     CONTINUE            = True
                     user_type           = User_Types.ADMIN.value
-                elif user.username in group_memebers:
+                elif user.username in git_users:
                     response_message    = f"Welcome {user.username}."
                     color               = Text_Color.SUCCESS.value
                     CONTINUE            = True
@@ -463,8 +485,10 @@ def admin_choose(**kwargs):
 
     """
     kwargs: {
-            'choice':# --> 1/.../3
-            'repo_name'
+            'choice'    :# --> 1/.../5
+            'username'  :#
+            'repo_name' :#/emp
+            'git_user'  :#/emp
             }
     """
     global response_message, color, choice
@@ -479,19 +503,46 @@ def admin_choose(**kwargs):
             color               = Text_Color.SUCCESS.value
 
         else:
-            response_message    = "no repository fouond"
+            response_message    = "no repository found"
             color               = Text_Color.WARNING.value
 
     # show repo memebers
     elif choice == '2':
         repository = Repository(kwargs.get('repo_name'))
-        if len(repository.show_contributors()) > 0:
-            response_message = repository.show_contributors()
-            color            = Text_Color.SUCCESS.value
+        if repository.repo_existence():
+            if len(repository.contributors) > 0:
+                response_message = repository.contributors
+                color            = Text_Color.SUCCESS.value
+
+            else:
+                response_message    = f"there are no contributors for repository {repository.repo_name}."
+                color               = Text_Color.WARNING.value
 
         else:
-            response_message    = f"there are no contributors for repository {repository.repo_name}."
-            color               = Text_Color.WARNING.value
+            response_message        = f"repository {repository.repo_name} not found"
+
+    # show all users
+    elif choice == '3':
+        git_users = config.group.get_group_members()
+        if len(git_users) > 0:
+            response_message    = git_users
+            color               = Text_Color.SUCCESS.value
+
+        else:
+            response_message    = "no user found"
+            color               = Text_Color.WARNING.valu
+
+    # show user repos
+    elif choice == '4':
+        git_user = User(kwargs.get('git_username'), '')
+        git_user_repos = git_user.all_repos
+
+        if len(git_user_repos) > 0:
+            response_message    = git_user_repos
+            color               = Text_Color.SUCCESS.value
+        else:
+            response_message    = f"there are no repositories for user {git_user.username}."
+            color                = Text_Color.WARNING.value           
 
     else:
         response_message    = 'Unknown command !'
@@ -588,7 +639,7 @@ def choose(**kwargs):
         password = kwargs['password']
         repo_name = kwargs['repo_name']
         repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
-        if repository.repo_existence():
+        if repository.user_repo_existence():
             response_message = {"resp_msg": "clone or remote with ssh: ", "link": repository.repo_link}
             color            = None
         else:
@@ -605,14 +656,18 @@ def choose(**kwargs):
         repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
         repository.show_contributors()
 
-        if len(repository.contributors) > 0:
+        if repository.user_repo_existence():
+            if len(repository.contributors) > 0:
+                response_message = repository.contributors
+                color            = Text_Color.SUCCESS.value
 
-            response_message = repository.contributors
-            color            = Text_Color.SUCCESS.value
+            else:
+                response_message    = f"there are no contributors for repository {repository.repo_name}."
+                color               = Text_Color.WARNING.value
+
         else:
-            response_message    = f"there are no contributors for repository {repository.repo_name}."
-            color               = Text_Color.WARNING.value
-
+            response_message    = f"repository {repository.repo_name} not found for user {repository.username}"
+            color               = Text_Color.ERROR.value
 
     # add member to repo
     elif choice == '6':
@@ -621,7 +676,7 @@ def choose(**kwargs):
         repo_name = kwargs['repo_name']
         repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
         member = kwargs['member']
-        if repository.repo_existence():
+        if repository.user_repo_existence():
             member_user = User(member, '')
             if member_user.user_existence():
                 if repository.is_repo_owner():
@@ -637,6 +692,7 @@ def choose(**kwargs):
         else:
             response_message    = f"repository {repository.repo_name} not found for user {repository.username}!"
             color               = Text_Color.ERROR.value
+
     # remove member from repo
     elif choice == '7':
         username = kwargs['username']
@@ -644,7 +700,7 @@ def choose(**kwargs):
         repo_name = kwargs['repo_name']
         member = kwargs['member']
         repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
-        if repository.repo_existence():
+        if repository.user_repo_existence():
             member_user = User(member, '')
             if member_user.user_existence():
                 if repository.is_contributor(member):
