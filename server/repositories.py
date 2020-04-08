@@ -19,10 +19,11 @@ import re
 import pickle
 
 class Repository(User, Group, Config):
-    def __init__(self, repo_name, username, password, group_name):
+    def __init__(self, repo_name, **kwargs):
         self.repo_name = repo_name
-        User.__init__(self, username, password)
-        Group.__init__(self, group_name)
+        if kwargs:
+            User.__init__(self, kwargs.get('username'), kwargs.get('password'))
+            Group.__init__(self, kwargs.get('group_name'))
         Config.__init__(self)
         self.repo_link = None
         self.repo_main_path = None
@@ -129,4 +130,19 @@ class Repository(User, Group, Config):
                 tmp_user = User(contributor, '')
                 if tmp_user.user_existence() is False:
                     self.contributors['others'].remove(contributor)
-    
+
+    @staticmethod
+    def show_all_repos():
+        all_repos = list()
+        dirs = list()
+        try:
+            dirs = os.listdir(f"/repositories/")
+
+        except:
+            pass
+
+        if len(dirs) > 0:
+            for d in dirs:
+                all_repos.append(d)
+
+        return all_repos

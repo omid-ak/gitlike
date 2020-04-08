@@ -24,11 +24,11 @@ import subprocess
 class Os_Type(Enum):
     LINUX       = "Linux"
     FREE_BSD    = "FreeBSD"
-    UNKNOW      = "unknown"
+    UNKNOWN      = "Unknown"
 class Linux_Distro_Type(Enum):
-    REDHAT  = ['fedora', 'centos']
-    DEBIAN  = ['ubuntu', 'debian'] 
-
+    REDHAT  = ['Fedora', 'Centos', 'Centos Linux']
+    DEBIAN  = ['Ubuntu', 'Debian', 'Debian GNU/Linux'] 
+    UNKNOWN = "Unknown"
 
 class Shell:
     def __init__(self, sh_name):
@@ -111,7 +111,7 @@ class Config:
         self.ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
     
     def dependencies_installation_check(self):
-        if os.path.exists("/usr/bin/git") is True:
+        if os.path.exists("/usr/bin/git") is True and os.path.exists("/usr/bin/nmap") is True:
             self.dependencies_installation_status  = True
         else:
             self.dependencies_installation_status  = False
@@ -120,15 +120,22 @@ class Config:
         if self.dependencies_installation_status is False:
             if self.os_type.name is Os_Type.LINUX:
                 if self.distro_type.name is Linux_Distro_Type.REDHAT.name:
-                    os.system('yum update -y && yum install git -y')
+                    os.system('yum update -y && yum install git -y && yum install nmap -y')
                 if self.distro_type.name is Linux_Distro_Type.DEBIAN.name:
-                    os.system('apt update -y && apt install git -y')
+                    os.system('apt update -y && apt install git -y && apt install nmap-y')
             elif self.os_type.name is Os_Type.FREE_BSD:
-                os.system("pkg update -y && pkg install git -y")
+                os.system("pkg update && pkg upgrade -y && pkg install git -y")
     
     def firewall_check(self):
+
         try:
-            res = subprocess.check_output(f"iptables -nL | grep 'tcp spt:{self.server_port}'", shell=True)
+
+            if self.os_type.name is Os_Type.LINUX.name:
+                res = subprocess.check_output(f"iptables -nL | grep 'tcp dpt:{self.server_port}'", shell=True)
+            
+            elif self.os_type.name is Os_Type.FREE_BSD.name:
+                res = subprocess.check_output(f"ipfw list | grep 'allow tcp from any to any {self.server_port}'", Shell=True)
+
             if res:
                 return True
             else:
@@ -139,18 +146,26 @@ class Config:
     def firewall_conf(self):
         """ Openning 7920 port if rule not exists for received connections """
         if self.firewall_check() is False:
-            os.system(f"iptables -A INPUT -p tcp --sport {self.server_port} -j ACCEPT")
+            if self.os_type.name is Os_Type.LINUX.name:
+                os.system(f"iptables -I INPUT -p tcp -m tcp --dport {self.server_port} -j ACCEPT")
+            elif self.os_type.name is Os_Type.FREE_BSD.name:
+                os.system(f"ipfw -q add allow tcp from any to any {self.server_port}")
 
     def detect_os_type(self):
         os_type = os.uname().sysname
         if os_type == Os_Type.LINUX.value:
             self.os_type = Os_Type.LINUX
-            distro_type = distro.distro_release_info().get("id")
+            distro_type = distro.name()
+            if distro_type:
+                if distro_type in Linux_Distro_Type.DEBIAN.value:
+                    self.distro_type = Linux_Distro_Type.DEBIAN
+                elif distro_type in Linux_Distro_Type.REDHAT.value:
+                    self.distro_type = Linux_Distro_Type.REDHAT
+                else:
+                    self.distro_type = Linux_Distro_Type.UNKNOWN
+            else:
+                self.distro_type = Linux_Distro_Type.UNKNOWN
 
-            for distrotypes in Linux_Distro_Type:
-                for entry in distrotypes.value:
-                    if entry in distro_type.lower():
-                        self.distro_type = distrotypes
         elif os_type == Os_Type.FREE_BSD.value:
             self.os_type = Os_Type.FREE_BSD
         else:

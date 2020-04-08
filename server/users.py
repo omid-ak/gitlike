@@ -16,6 +16,12 @@ import pam
 import os
 import pwd
 import re
+import grp
+from enum import Enum
+
+class User_Types(Enum):
+    ADMIN       = "admin"
+    GIT_USER    = "git_user"
 
 class User():
     def __init__(self, username, password):
@@ -99,3 +105,18 @@ class User():
         else:
             self.all_repos = []
 
+
+    def is_admin(self):
+        global root_access_group
+        try:
+            root_access_group = grp.getgrnam("wheel")
+        except :
+            try:
+                root_access_group  = grp.getgrnam("sudo")
+            except:
+                root_access_group = None
+        
+        if self.username in root_access_group.gr_mem:
+            return True
+        else:
+            return False
