@@ -227,7 +227,7 @@ def main():
 
                 # show user repos
                 elif choice_admin == '4':
-                    git_username = input("Enter repository name: ")
+                    git_username = input("Enter git user username: ")
 
                     connection.sendall(serializer(choice=choice_admin,
                                                 username=us['username'],
