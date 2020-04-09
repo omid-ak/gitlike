@@ -19,7 +19,11 @@ import grp
 import re
 import pickle
 
+<<<<<<< HEAD
 class Repository(User, Config):
+=======
+class Repository(User, Group, Config):
+>>>>>>> 1038c4e7c8985eb3e3b4a1e046d36d80ed0843fb
     def __init__(self, **kwargs):
         User.__init__(self, username=kwargs.get('username', None), password=kwargs.get('password', None))
         Config.__init__(self)
