@@ -531,7 +531,7 @@ def admin_choose(**kwargs):
 
         else:
             response_message    = "no user found"
-            color               = Text_Color.WARNING.valu
+            color               = Text_Color.WARNING.value
 
     # show user repos
     elif choice == '4':
