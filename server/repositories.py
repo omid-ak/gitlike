@@ -11,7 +11,8 @@ Email: omid7798@gmail.com
 __author__ = "omid <omid7798@gmail.com>"
 
 from users import User
-from baseconf import Config, Group
+from baseconf import Config, Os_Type
+from shutil import rmtree
 import os
 import pwd
 import grp
@@ -19,26 +20,25 @@ import re
 import pickle
 
 class Repository(User, Group, Config):
-    def __init__(self, repo_name, **kwargs):
-        self.repo_name = repo_name
-        User.__init__(self, kwargs.get('username', None), kwargs.get('password', None))
-        Group.__init__(self, kwargs.get('group_name', None))
+    def __init__(self, **kwargs):
+        User.__init__(self, username=kwargs.get('username', None), password=kwargs.get('password', None))
         Config.__init__(self)
-        self.repo_link = None
-        self.repo_main_path = None
-        self.repo_bare_files_path = None
-        self.home_user_path = None
-        self.repo_contributors_db = None
+        self.repo_name              = kwargs.get("repo_name", None)
+        self.os_type                = kwargs.get("os_type", None)
+        self.repo_link              = None
+        self.repo_main_path         = None
+        self.repo_bare_files_path   = None
+        self.home_user_path         = None
+        self.repo_contributors_db   = None
         self.get_repo_link_and_path_and_contributors_db()
         self.contributors = dict()
         self.show_contributors()
 
     def get_repo_link_and_path_and_contributors_db(self):
-        self.repo_main_path = f"/repositories/{self.repo_name}/"
-        self.repo_contributors_db = f"{self.repo_main_path}contributors/{self.repo_name}.json"
-        self.repo_bare_files_path = f"{self.repo_main_path}{self.repo_name}.git/"
-        self.home_user_path = f"/home/{self.username}/"
-        self.repo_link = f"ssh://{self.username}@{self.ip}:{self.git_port}{self.home_user_path}{self.repo_name}.git/"
+        self.repo_main_path = os.path.join("/repositories/",f"{self.repo_name}/")
+        self.repo_contributors_db = os.path.join(f"{self.repo_main_path}","contributors/",f"{self.repo_name}.json")
+        self.repo_bare_files_path = os.path.join(f"{self.repo_main_path}",f"{self.repo_name}.git")
+        self.repo_link = f"ssh://{self.username}@{self.ip}:{self.git_port}{os.path.join(self.home_user_path, f'{self.repo_name}.git')}"
 
     def repo_existence(self):
         if os.path.exists(self.repo_main_path) is True:
@@ -46,7 +46,7 @@ class Repository(User, Group, Config):
         else:
             return False
     def user_repo_existence(self):
-        if os.path.exists(f"{self.home_user_path}/{self.repo_name}.git"):
+        if os.path.exists(os.path.join(self.home_user_path, f"{self.repo_name}.git")):
             return True
         else:
             return False
@@ -58,57 +58,60 @@ class Repository(User, Group, Config):
             return False
 
     def create_repository(self):
-        os.mkdir(f"{self.repo_main_path}")
-        os.mkdir(f"{self.repo_bare_files_path}")
-        os.mkdir(f"{self.repo_main_path}contributors/")
+        os.mkdir(os.path.join(self.repo_main_path))
+        os.mkdir(os.path.join(self.repo_bare_files_path))
+        os.mkdir(os.path.join(self.repo_main_path, "contributors"))
         
         self.contributors = {"owner": self.username, "others": []}
         pickle.dump(self.contributors, open(self.repo_contributors_db, "wb"))
 
-        os.system(f"git init --bare --share=group {self.repo_bare_files_path}")
-        os.system(f"chgrp -R {self.group_name} {self.repo_bare_files_path}")
-        os.system(f"ln -s {self.repo_bare_files_path} {self.home_user_path}")
-        os.system(f"chown -R {self.username}:{self.group_name} {self.home_user_path}")
+        if self.os_type is Os_Type.LINUX or self.os_type is Os_Type.FREE_BSD:
+            os.system(f"git init --bare --share=group {self.repo_bare_files_path}")
+            os.system(f"chgrp -R {self.group_name} {self.repo_bare_files_path}")
+            os.system(f"ln -s {self.repo_bare_files_path} {self.home_user_path}")
+            os.system(f"chown -R {self.username}:{self.group_name} {self.home_user_path}")
         self.show_repos()
 
     def delete_repository(self):
         self.show_contributors()
         # remove repo for owner
         try:
-            os.unlink(f"{self.home_user_path}{self.repo_name}.git")
+            os.unlink(os.path.join(self.home_user_path, f"{self.repo_name}.git"))
         except:
             print(f"an issue occured while unlinking {self.home_user_repo_path}")
         #remove repo for contributors
         if len(self.contributors.get("others")) > 0:
             for p in self.contributors.get("others"):
                 try:
-                    os.unlink(f"/home/{p}/{self.repo_name}.git")
+                    os.unlink(os.path.join("/home", p, f"{self.repo_name}.git"))
                 except :
                     print(f"an issue occured while unlinking {self.repo_name} for {p}")
         # remove repo main files
-        try:
-            os.system(f"rm -rf {self.repo_main_path}")
-        except :
-            print(f"an issue occured while removing {self.repo_main_path}")
+        if self.os_type is Os_Type.LINUX or self.os_type is Os_Type.FREE_BSD:
+            try:
+                rmtree(os.path.join(self.repo_main_path))
+            except :
+                print(f"an issue occured while removing {self.repo_main_path}")
 
     def add_contributor(self, member):
         self.show_contributors()
         self.contributors["others"].append(member)
         pickle.dump(self.contributors, open(self.repo_contributors_db, "wb"))
 
-        try:
-            os.system(f"ln -s {self.repo_bare_files_path} /home/{member}/")
-            os.system(f"chown -R {member}:{self.group_name} /home/{member}")
+        if self.os_type is Os_Type.LINUX or self.os_type is Os_Type.FREE_BSD:
+            try:
+                os.system(f"ln -s {self.repo_bare_files_path} {os.path.join('/home', member)}")
+                os.system(f"chown -R {member}:{self.group_name} {os.path.join('/home', member)}")
 
-        except:
-            print(f"an issue occured in {member} files for repository {self.repo_name}")
+            except:
+                print(f"an issue occured in {member} files for repository {self.repo_name}")
 
     def remove_contributor(self, member):
         self.show_contributors()
         self.contributors["others"].remove(member)
         pickle.dump(self.contributors, open(self.repo_contributors_db, "wb"))
         try:
-            os.unlink(f"/home/{member}/{self.repo_name}.git")
+            os.unlink(os.path.join("/home", member, f"{self.repo_name}.git"))
         except:
             print(f"repo {self.repo_name} not found for user {member}")
 

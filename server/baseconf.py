@@ -19,16 +19,16 @@ import subprocess
 
 
 
-"""define multiple distribution and OS"""
+"""define multiple distribution and Operating Systems"""
 
 class Os_Type(Enum):
     LINUX       = "Linux"
     FREE_BSD    = "FreeBSD"
-    UNKNOWN     = "Unknown"
+    UNSUPPORTED     = "Unsupported"
 class Linux_Distro_Type(Enum):
     REDHAT  = ['Fedora', 'CentOS', 'CentOS Linux']
     DEBIAN  = ['Ubuntu', 'Debian', 'Debian GNU/Linux'] 
-    UNKNOWN = "Unknown"
+    UNSUPPORTED = "Unsupported"
 
 class Shell:
     def __init__(self, sh_name):
@@ -64,10 +64,12 @@ class Group:
         return grp.getgrnam(self.grp_name).gr_mem 
 
 
-    def create_group(self):
+    def create_group(self, os_type):
         if self.grp_existence_status is False:
-            os.system(f"groupadd {self.grp_name}")
-
+            if os_type is Os_Type.LINUX:
+                os.system(f"groupadd {self.grp_name}")
+            elif os_type is Os_Type.FREE_BSD:
+                os.system(f"pw group add {self.grp_name}")
 
 class Config:
     def __init__(self):
@@ -104,7 +106,7 @@ class Config:
     def init_group(self):
         # init group
         self.group = Group('git_users')
-        self.group.create_group()
+        self.group.create_group(self.os_type)
         self.group_name = self.group.grp_name
 
     def calc_ip(self):
@@ -162,12 +164,12 @@ class Config:
                 elif distro_type in Linux_Distro_Type.REDHAT.value:
                     self.distro_type = Linux_Distro_Type.REDHAT
                 else:
-                    self.distro_type = Linux_Distro_Type.UNKNOWN
+                    self.distro_type = Linux_Distro_Type.UNSUPPORTED
             else:
-                self.distro_type = Linux_Distro_Type.UNKNOWN
+                self.distro_type = Linux_Distro_Type.UNSUPPORTED
 
         elif os_type == Os_Type.FREE_BSD.value:
             self.os_type = Os_Type.FREE_BSD
         else:
-            self.os_type = Os_Type.UNKNOW
+            self.os_type = Os_Type.UNSUPPORTED
 
