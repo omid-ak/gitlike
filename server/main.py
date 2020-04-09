@@ -498,7 +498,7 @@ def admin_choose(**kwargs):
     # show all repos
     if choice == '1':
         all_repos = Repository.show_all_repos()
-        if len(all_repos) > 0:
+        if all_repos:
             response_message    = all_repos
             color               = Text_Color.SUCCESS.value
 
@@ -510,7 +510,7 @@ def admin_choose(**kwargs):
     elif choice == '2':
         repository = Repository(kwargs.get('repo_name'))
         if repository.repo_existence():
-            if len(repository.contributors) > 0:
+            if repository.contributors:
                 response_message = repository.contributors
                 color            = Text_Color.SUCCESS.value
 
@@ -525,7 +525,7 @@ def admin_choose(**kwargs):
     # show all users
     elif choice == '3':
         git_users = config.group.get_group_members()
-        if len(git_users) > 0:
+        if git_users:
             response_message    = git_users
             color               = Text_Color.SUCCESS.value
 
@@ -538,7 +538,7 @@ def admin_choose(**kwargs):
         git_user = User(kwargs.get('git_username'), '')
         git_user_repos = git_user.all_repos
 
-        if len(git_user_repos) > 0:
+        if git_user_repos:
             response_message    = git_user_repos
             color               = Text_Color.SUCCESS.value
         else:
@@ -575,7 +575,7 @@ def choose(**kwargs):
         user = User(username, password)
         user.show_repos()
 
-        if len(user.all_repos) > 0:
+        if user.all_repos:
             response_message    = user.all_repos
             color               = Text_Color.SUCCESS.value
         else:
@@ -658,7 +658,7 @@ def choose(**kwargs):
         repository.show_contributors()
 
         if repository.user_repo_existence():
-            if len(repository.contributors) > 0:
+            if repository.contributors:
                 response_message = repository.contributors
                 color            = Text_Color.SUCCESS.value
 
