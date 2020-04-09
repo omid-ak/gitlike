@@ -781,8 +781,7 @@ def main():
         exit(0)
 
     print(f"{config.os_type.value} Operating System")
-    if config.distro_type is not  None:
-        print(f"{config.distro_type.value} Distribution.")
+
     config.company_name = input("Entenr Your Company Name: ")
     print('checking for dependencies...')
 
