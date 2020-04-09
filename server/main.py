@@ -1,7 +1,7 @@
 """
 v1.0.2
 GitLike Project
-Copyright (C) 2020 GitLike. All Rights Reserved.
+Copyleft (C) 2020 GitLike. All Rights Reserved.
 Licence: GPL3
 omid7798@gmail.com
 """
@@ -426,7 +426,7 @@ def enrollment(**kwargs):
     CONTINUE            = False
     user_type           = None
     #sign in
-    user = User(kwargs['username'], kwargs['password'])
+    user = User(username=kwargs['username'], password=kwargs['password'], shell_name=config.shell_name, group_name=config.group_name, os_type=config.os_type)
     if kwargs['choice'] == '1':
         git_users = config.group.get_group_members()
         if user.user_existence():
@@ -465,8 +465,6 @@ def enrollment(**kwargs):
                     CONTINUE            = False
                 else:
                     user.create_user()
-                    user.change_shell(config.shell_name)
-                    user.add_to_group(config.group_name)
                     response_message    = f"user {user.username} created successfully."
                     color               = Text_Color.SUCCESS.value
             else:
@@ -508,7 +506,7 @@ def admin_choose(**kwargs):
 
     # show repo memebers
     elif choice == '2':
-        repository = Repository(kwargs.get('repo_name'))
+        repository = Repository(repo_name=kwargs.get('repo_name'))
         if repository.repo_existence():
             if repository.contributors:
                 response_message = repository.contributors
@@ -535,7 +533,7 @@ def admin_choose(**kwargs):
 
     # show user repos
     elif choice == '4':
-        git_user = User(kwargs.get('git_username'), '')
+        git_user = User(username=kwargs.get('git_username'))
         git_user_repos = git_user.all_repos
 
         if git_user_repos:
@@ -572,7 +570,7 @@ def choose(**kwargs):
     if choice == '1':
         username = kwargs['username']
         password = kwargs['password']
-        user = User(username, password)
+        user = User(username=username, password=password)
         user.show_repos()
 
         if user.all_repos:
@@ -588,7 +586,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
+        repository = Repository(repo_name=repo_name, username=username, password=password)
 
         if repository.repo_name_validation():
             if repository.repo_existence():
@@ -615,7 +613,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
+        repository = Repository(repo_name=repo_name, username=username, password=password)
 
         if repository.repo_existence():
             repository.show_contributors()
@@ -639,7 +637,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
+        repository = Repository(repo_name=repo_name, username=username, password=password)
         if repository.user_repo_existence():
             response_message = {"resp_msg": "clone or remote with ssh: ", "link": repository.repo_link}
             color            = None
@@ -654,7 +652,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
+        repository = Repository(repo_name=repo_name, username=username, password=password)
         repository.show_contributors()
 
         if repository.user_repo_existence():
@@ -675,10 +673,10 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
+        repository = Repository(repo_name=repo_name, username=username, password=password)
         member = kwargs['member']
         if repository.user_repo_existence():
-            member_user = User(member, '')
+            member_user = User(username=member)
             if member_user.user_existence():
                 if repository.is_repo_owner():
                     repository.add_contributor(member)
@@ -700,9 +698,9 @@ def choose(**kwargs):
         password = kwargs['password']
         repo_name = kwargs['repo_name']
         member = kwargs['member']
-        repository = Repository(repo_name, username=username, password=password, group_name=config.group_name)
+        repository = Repository(repo_name=repo_name, username=username, password=password)
         if repository.user_repo_existence():
-            member_user = User(member, '')
+            member_user = User(username=member)
             if member_user.user_existence():
                 if repository.is_contributor(member):
                     repository.show_contributors()
@@ -734,7 +732,7 @@ def choose(**kwargs):
 
         username = kwargs['username']
         password = kwargs['password']
-        user = User(username, password)
+        user = User(username=username, password=password)
         if user.user_existence():
             if user.user_authentication():
                 dl_ch = kwargs['delete_response']
@@ -763,18 +761,28 @@ def main():
     logger.main_logger(log_type=Log_Type.START)
     # Base config
     print('initializing...')
-    if config.os_type.name is Os_Type.UNKNOWN.name:
-        print("Unknown Operation System .!")
-        logger.main_logger(Log_Type=Log_Type.START, log_msg="Unknown Operating System.", level=logging.ERROR)
+    if config.os_type is Os_Type.UNSUPPORTED:
+        msg = "Unsupported Operation System .!"
+        print(msg)
+        logger.main_logger(Log_Type=Log_Type.START, log_msg=msg, level=logging.ERROR)
         exit(1)
-    if config.os_type.name is Os_Type.LINUX.name:
-        if config.distro_type.name is Linux_Distro_Type.UNKNOWN.name:
-            print("Unknown Linux Distribution.!")
-            logger.main_logger(Log_Type=Log_Type.START, log_msg="Unknown Linux Distribution.", level=logging.ERROR)
+
+    if config.os_type is Os_Type.LINUX:
+        if config.distro_type is Linux_Distro_Type.UNSUPPORTED:
+            msg = "Unsupported Linux Distribution.!"
+            print(msg)
+            logger.main_logger(Log_Type=Log_Type.START, log_msg=msg, level=logging.ERROR)
             exit(1)
 
-    print(f"{config.os_type.value} Operating System")
+    if config.os_type is Os_Type.FREE_BSD:
+        msg = "GitLike Support for FreeBSD is Developing and will be release in next versions\nThank you for your patienece."
+        print(msg)
+        logger.main_logger(Log_Type=Log_Type.START, log_msg=msg, level=logging.INFO)
+        exit(0)
 
+    print(f"{config.os_type.value} Operating System")
+    if config.distro_type is not  None:
+        print(f"{config.distro_type.value} Distribution.")
     config.company_name = input("Entenr Your Company Name: ")
     print('checking for dependencies...')
 
@@ -782,8 +790,10 @@ def main():
     if config.dependencies_installation_status is False:
         answer = input("You need to install some dependencies do you want to continues? [y/n]: ")
         if answer is "y" or answer is "Y":
+            msg = "Dependencies Installed Successfully."
             config.install_dependencies()
-            logger.main_logger(Log_Type=Log_Type.START, log_msg="Dependencies Installed Successfully.")
+            print(msg)
+            logger.main_logger(Log_Type=Log_Type.START, log_msg=msg)
 
         elif answer is "n" or answer is "N":
             print("Operation aborted")
@@ -816,3 +826,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
