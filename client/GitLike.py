@@ -44,6 +44,7 @@ def admin_menu(user, company_name):
     username_colorful = colored(user, 'cyan')
     os.system("clear")
     print(greeting(company_name))
+    print("Wellcome To The GitLike Admin Page.")
     print(f'choose :\t\t\t\tuser_admin:{username_colorful}\n'
 
             '1-show all repositories\n'
@@ -57,6 +58,7 @@ def menu(user, company_name):
     username_colorful = colored(user, 'cyan')
     os.system("clear")
     print(greeting(company_name))
+    print("Wellcome To The GitLike Users Page")
     print(f'choose :\t\t\t\tuser:{username_colorful}\n'
           
           '1-show my repositories\n'
