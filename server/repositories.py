@@ -19,6 +19,7 @@ import grp
 import re
 import pickle
 
+
 class Repository(User, Config):
     def __init__(self, **kwargs):
         User.__init__(self, username=kwargs.get('username', None), password=kwargs.get('password', None))
