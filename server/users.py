@@ -33,13 +33,9 @@ class User():
         self.group_name = kwargs.get("group_name", None)
         if isinstance(kwargs.get("password", None), list):
             self.passwords      = kwargs.get("password", None)
-            if self.password_match():
-                self.password       = self.passwords[0]
-            else:
-                self.password       = None
         else:
             self.password       = kwargs.get("password", None)
-        self.passwords  = kwargs.get("passwords", None)
+            self.passwords      = None
         self.home_user_path = os.path.join(f"/home",f"{self.username}")
         self.all_repos  = list()
         self.show_repos()
@@ -59,6 +55,7 @@ class User():
     def password_match(self):
         if self.passwords:
             if len(self.passwords) == 2 and self.passwords[0] == self.passwords[1]:
+                self.password = self.passwords[0]
                 return True
             else:
                 return False
