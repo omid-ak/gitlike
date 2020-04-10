@@ -1,7 +1,8 @@
 """
+-*- coding: utf-8 -*-
 v1.0.2
 GitLike Project
-Copyleft (C) 2020 GitLike. All Rights Reserved.
+Copyright (C) 2020 GitLike, Omid Akhgary. All Rights Reserved.
 Licence: GPL3
 Email: omid7798@gmail.com
 """
@@ -42,6 +43,7 @@ class Log_Type(Enum):
 class Logger():
 
     def __init__(self):
+        self.version                = None
         self.connection             = None
         self.cursor                 = None
         self.log_type               = None
@@ -97,7 +99,8 @@ class Logger():
                                         level_name  VARCHAR (20),
                                         user_       VARCHAR (50),
                                         thread_name VARCHAR (50),
-                                        message     VARCHAR (1000)
+                                        message     VARCHAR (1000),
+                                        version     VARCHAR (20)
                                                                             )"""
 
         connection_received_table   = """CREATE TABLE IF NOT EXISTS connection_received (
@@ -171,12 +174,13 @@ class Logger():
         global query_
 
         if self.log_type is Log_Type.START:
-            query_ = f"""INSERT INTO start (date_time, level_name, user_, thread_name, message)
+            query_ = f"""INSERT INTO start (date_time, level_name, user_, thread_name, message, version)
                                 VALUES ('{str(self.now_tostring)}', 
                                         '{str(self.level_name)}', 
                                         '{str(self.user_)}', 
                                         '{str(self.current_thread_name)}',
-                                        '{str(self.log_message)}')"""
+                                        '{str(self.log_message)}',
+                                        '{str(self.version)}')"""
 
         elif self.log_type is Log_Type.CONNECTION_RECEIVED:
             query_ = f"""INSERT INTO connection_received (date_time,level_name,user_,thread_name,ip,port,stage,message)
@@ -235,6 +239,7 @@ class Logger():
 
         """ main method to deal with main controller """
 
+        self.version = kwargs.get('version', None)
         self.log_type = kwargs.get('log_type', None)   # log type enum
         self.ip = kwargs.get("ip", None)
         self.port = kwargs.get("port", None)
@@ -261,3 +266,4 @@ class Logger():
             self.log_message    = str(kwargs.get("log_msg", None)).replace('\'', '`')
 
         self.insert_into_log_table()
+

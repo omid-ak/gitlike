@@ -1,7 +1,8 @@
 """
+-*- coding: utf-8 -*-
 v1.0.2
 GiLike Project
-Copyleft (C) 2020 GitLike. All Rights Reserved.
+Copyright (C) 2020 GitLike, Omid Akhgary. All Rights Reserved.
 Licence: GPL3
 Email: omid7798@gmail.com
 """
@@ -10,8 +11,8 @@ Email: omid7798@gmail.com
 
 __author__ = "omid <omid7798@gmail.com>"
 
-from users import User
-from baseconf import Config, Os_Type
+from .users import User
+from .baseconf import Config, Os_Type
 from shutil import rmtree
 import os
 import pwd
