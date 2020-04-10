@@ -1,14 +1,15 @@
 """
+-*- coding: utf-8 -*-
 v1.0.1
-GitLike Project
-Copyleft (C) 2020 GitLike. All Rights Reserved.
-Licence: GPL3
-Email: omid7798@gmail.com
-
+gitlike project
+copyright (c) 2020 GitLike, Omid Akhgary. all rights reserved.
+licence: GPL3
+email: omid7798@gmail.com
 """
 
 __author__ = "omid <7798@gmail.com>"
 
+import sys
 import os
 import socket
 import pickle
@@ -125,12 +126,12 @@ def main():
             CONTINUE = False
             print("Bye!")
             break
-            exit(0)
+            sys.exit(0)
 
         else:
             print(colored('Unknown command!', 'red'))
             break
-            exit(0)
+            sys.exit(0)
 
     if CONTINUE:
 
@@ -162,11 +163,11 @@ def main():
                     elif c == 'n':
                         print('Bye!')
                         break
-                        exit(0)
+                        sys.exit(0)
                     else:
                         print(colored("Unknown command!", 'red'))
                         break
-                        exit(0)
+                        sys.exit(0)
 
                 # show repo memebers
                 elif choice_admin == '2':
@@ -196,11 +197,11 @@ def main():
                     elif c == 'n':
                         print('Bye!')
                         break
-                        exit(0)
+                        sys.exit(0)
                     else:
                         print(colored("Unknown command!", 'red'))
                         break
-                        exit(0)
+                        sys.exit(0)
 
                 #show all users
                 elif choice_admin == '3':
@@ -221,11 +222,11 @@ def main():
                     elif c == 'n':
                         print('Bye!')
                         break
-                        exit(0)
+                        sys.exit(0)
                     else:
                         print(colored("Unknown command!", 'red'))
                         break
-                        exit(0)
+                        sys.exit(0)
 
                 # show user repos
                 elif choice_admin == '4':
@@ -253,11 +254,11 @@ def main():
                     elif c == 'n':
                         print('Bye!')
                         break
-                        exit(0)
+                        sys.exit(0)
                     else:
                         print(colored("Unknown command!", 'red'))
                         break
-                        exit(0)
+                        sys.exit(0)
 
                 # exit
                 elif choice_admin == '5':
@@ -267,11 +268,11 @@ def main():
                                     )
                     print("Bye!")
                     break
-                    exit(0)
+                    sys.exit(0)
                 else:
                     print(colored("Unknown command!", 'red'))
                     break
-                    exit(0)
+                    sys.exit(0)
         
         # users part
         elif sign_response['user_type'] == User_Types.GIT_USER.value:
@@ -306,11 +307,11 @@ def main():
                     elif c == 'n':
                         print('Bye!')
                         break
-                        exit(0)
+                        sys.exit(0)
                     else:
                         print(colored("Unknown command!", 'red'))
                         break
-                        exit(0)
+                        sys.exit(0)
 
 
                 # create repo
@@ -342,11 +343,11 @@ def main():
                     elif c == 'n':
                         print('Bye!')
                         break
-                        exit(0)
+                        sys.exit(0)
                     else:
                         print(colored("Unknown command!", 'red'))
                         break
-                        exit(0)
+                        sys.exit(0)
 
                 # delete repo
                 elif choice == '3':
@@ -374,11 +375,11 @@ def main():
                     elif c == 'n':
                         print('Bye!')
                         break
-                        exit(0)
+                        sys.exit(0)
                     else:
                         print(colored("Unknown command!", 'red'))
                         break
-                        exit(0)
+                        sys.exit(0)
 
 
                 # get repo link
@@ -409,11 +410,11 @@ def main():
                     elif c == 'n':
                         print('Bye!')
                         break
-                        exit(0)
+                        sys.exit(0)
                     else:
                         print(colored("Unknown command!", 'red'))
                         break
-                        exit(0)
+                        sys.exit(0)
 
                 # show repo contributors
                 elif choice == '5':
@@ -445,11 +446,11 @@ def main():
                     elif c == 'n':
                         print('Bye!')
                         break
-                        exit(0)
+                        sys.exit(0)
                     else:
                         print(colored("Unknown command!", 'red'))
                         break
-                        exit(0)
+                        sys.exit(0)
 
 
 
@@ -478,11 +479,11 @@ def main():
                     elif c == 'n':
                         print('Bye!')
                         break
-                        exit(0)
+                        sys.exit(0)
                     else:
                         print(colored("Unknown command!", 'red'))
                         break
-                        exit(0)
+                        sys.exit(0)
 
                 # remove member from repo
                 elif choice == '7':
@@ -508,11 +509,11 @@ def main():
                     elif c == 'n':
                         print('Bye!')
                         break
-                        exit(0)
+                        sys.exit(0)
                     else:
                         print(colored("Unknown command!", 'red'))
                         break
-                        exit(0)
+                        sys.exit(0)
 
 
 
@@ -534,11 +535,11 @@ def main():
                         menu_response = deserializer(connection.recv(4096))
                         print(colored(menu_response['msg'], menu_response['color']))
                         break
-                        exit(0)
+                        sys.exit(0)
                     else:
                         print(colored('Authentication failed.\nusername or password not matched!', 'red'))
                         break
-                        exit(0)
+                        sys.exit(0)
                 # exit
                 elif choice == '9':
                     connection.sendall(serializer(choice=choice,
@@ -547,13 +548,13 @@ def main():
                                     )
                     print("Bye!")
                     break
-                    exit(0)
+                    sys.exit(0)
                 else:
                     print(colored("Unknown command!", 'red'))
                     break
-                    exit(0)
+                    sys.exit(0)
         else:
-            exit(0)
+            sys.exit(0)
 
 
 if __name__ == '__main__':
