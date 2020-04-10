@@ -136,7 +136,7 @@ class Config:
                 res = subprocess.check_output(f"iptables -nL | grep 'tcp dpt:{self.server_port}'", shell=True)
             
             elif self.os_type.name is Os_Type.FREE_BSD.name:
-                res = subprocess.check_output(f"ipfw list | grep 'allow tcp from any to any {self.server_port}'", Shell=True)
+                res = subprocess.check_output(f"ipfw list | grep 'allow tcp from any to any {self.server_port}'", shell=True)
 
             if res:
                 return True
