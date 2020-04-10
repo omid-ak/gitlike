@@ -29,16 +29,15 @@ class Repository(User, Config):
         self.repo_link              = None
         self.repo_main_path         = None
         self.repo_bare_files_path   = None
-        self.home_user_path         = None
         self.repo_contributors_db   = None
         self.get_repo_link_and_path_and_contributors_db()
         self.contributors = dict()
         self.show_contributors()
 
     def get_repo_link_and_path_and_contributors_db(self):
-        self.repo_main_path = os.path.join("/repositories/",f"{self.repo_name}/")
-        self.repo_contributors_db = os.path.join(f"{self.repo_main_path}","contributors/",f"{self.repo_name}.json")
-        self.repo_bare_files_path = os.path.join(f"{self.repo_main_path}",f"{self.repo_name}.git")
+        self.repo_main_path = os.path.join("/repositories", self.repo_name)
+        self.repo_contributors_db = os.path.join(self.repo_main_path, "contributors", f"{self.repo_name}.json")
+        self.repo_bare_files_path = os.path.join(self.repo_main_path,f"{self.repo_name}.git")
         self.repo_link = f"ssh://{self.username}@{self.ip}:{self.git_port}{os.path.join(self.home_user_path, f'{self.repo_name}.git')}"
 
     def repo_existence(self):
@@ -135,7 +134,7 @@ class Repository(User, Config):
         if os.path.exists(self.repo_contributors_db) is True:
             self.contributors = pickle.load(open(self.repo_contributors_db, "rb"))
             for contributor in self.contributors.get("others"):
-                tmp_user = User(contributor, '')
+                tmp_user = User(username=contributor)
                 if tmp_user.user_existence() is False:
                     self.contributors['others'].remove(contributor)
 
