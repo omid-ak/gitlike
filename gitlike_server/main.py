@@ -1,7 +1,8 @@
 """
+-*- coding: utf-8 -*-
 v1.0.2
 GitLike Project
-Copyleft (C) 2020 GitLike. All Rights Reserved.
+Copyright (C) 2020 GitLike, Omid Akhgary. All Rights Reserved.
 Licence: GPL3
 omid7798@gmail.com
 """
@@ -13,27 +14,22 @@ Main Module To Run
 
 __author__ = "omid <omid7798@gmail.com>"
 
-from baseconf import Config, Os_Type, Linux_Distro_Type
-from users import User, User_Types
-from repositories import Repository
-from _logging import Logger, Log_Type
+from .baseconf import Config, Os_Type, Linux_Distro_Type
+from .users import User, User_Types
+from .repositories import Repository
+from ._logging import Logger, Log_Type
 from enum import Enum
-import socket
-from threading import Thread
 import pickle
 import os
 import logging
+import sys
 
-
-# check for root
-if os.geteuid() != 0:
-    print('Permission denied run only with root user')
-    exit(0)
 
 # Using from configs
 config = Config()
 # Using from logger
 logger = Logger()
+
 
 # Determine Client Text Colors.
 class Text_Color(Enum):
@@ -755,74 +751,4 @@ def choose(**kwargs):
         color               = Text_Color.ERROR.value
 
     return {"msg": response_message, "color": color}
-
-
-def main():
-    logger.main_logger(log_type=Log_Type.START)
-    # Base config
-    print('initializing...')
-    if config.os_type is Os_Type.UNSUPPORTED:
-        msg = "Unsupported Operation System .!"
-        print(msg)
-        logger.main_logger(Log_Type=Log_Type.START, log_msg=msg, level=logging.ERROR)
-        exit(1)
-
-    if config.os_type is Os_Type.LINUX:
-        if config.distro_type is Linux_Distro_Type.UNSUPPORTED:
-            msg = "Unsupported Linux Distribution.!"
-            print(msg)
-            logger.main_logger(Log_Type=Log_Type.START, log_msg=msg, level=logging.ERROR)
-            exit(1)
-
-    if config.os_type is Os_Type.FREE_BSD:
-        msg = "GitLike Support for FreeBSD is Developing and will be release in next versions\nThank you for your patienece."
-        print(msg)
-        logger.main_logger(Log_Type=Log_Type.START, log_msg=msg, level=logging.INFO)
-        exit(0)
-
-    print(f"{config.os_type.value} Operating System")
-
-    config.company_name = input("Entenr Your Company Name: ")
-    print('checking for dependencies...')
-
-    # install dependencies
-    if config.dependencies_installation_status is False:
-        answer = input("You need to install some dependencies do you want to continues? [y/n]: ")
-        if answer is "y" or answer is "Y":
-            msg = "Dependencies Installed Successfully."
-            config.install_dependencies()
-            print(msg)
-            logger.main_logger(Log_Type=Log_Type.START, log_msg=msg)
-
-        elif answer is "n" or answer is "N":
-            print("Operation aborted")
-            logger.main_logger(Log_Type=Log_Type.START, log_msg="Dependencies Installation Operation Aborted.")
-        else:
-            print("Unknown!")
-            exit(0)
-    else:
-        logger.main_logger(log_type=Log_Type.START, log_msg="Dependencies Resolved.")
-        print("Dependencies Resolved.")
-    
-    # connection
-    
-    main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    main_socket.bind(('0.0.0.0', config.server_port))
-
-    main_socket.listen()
-    print("Waiting For connection...")
-
-    try:
-        while True:
-            client, addr = main_socket.accept()
-            thread = Thread(target=handler, args=(main_socket, client, addr))
-            thread.setDaemon(True)
-            thread.start()
-    except OSError:
-        print('closed')
-        pass
-
-
-if __name__ == '__main__':
-    main()
 

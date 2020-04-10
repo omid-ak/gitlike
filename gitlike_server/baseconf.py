@@ -1,7 +1,8 @@
 """
+-*- coding: utf-8 -*-
 v1.0.2
 GiLike Project
-Copyleft (C) 2020 omid akhgary. All Rights Reserved.
+Copyright (C) 2020 GitLike, omid akhgary. All Rights Reserved.
 Licence: GPL3
 Email: omid7798@gmail.com
 """

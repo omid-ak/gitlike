@@ -1,7 +1,8 @@
 """
+-*- coding: utf-8 -*-
 v1.0.2
 GiLike Project
-Copyleft (C) 2020 GitLike. All Rights Reserved.
+Copyright (C) 2020 GitLike, omid akhgary. All Rights Reserved.
 Licence: GPL3
 Email: omid7798@gmail.com
 """
@@ -12,6 +13,7 @@ Users controlling of Server Side part of GitLike Project.
 
 __author__ = 'omid <omid7798@gmail.com>'
 
+# import system libs
 import pam
 import os
 import pwd
@@ -19,7 +21,9 @@ import re
 import grp
 from shutil import rmtree
 from enum import Enum
-from baseconf import Os_Type
+
+# import gitlike_server libs
+from .baseconf import Os_Type
 
 class User_Types(Enum):
     ADMIN       = "admin"
