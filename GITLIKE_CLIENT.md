@@ -15,7 +15,7 @@ Client:<br>
 **<br>
 `cd gitlike_client`
 `pip3 install -r client_requirements.txt`<br>
-`python3 gitlike_client/GitLike.py <your_server_ip_address>`<br>
+`python3 GitLike.py <your_server_ip_address>`<br>
 
 ### As well as if you want to access to the GitLike client you can follow this Instructions: <br>
 ##### But be aware that for this action you need to install client_requirements.txt on your main interpreter.(Follow ** Instructions)
