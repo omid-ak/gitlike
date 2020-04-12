@@ -1,14 +1,29 @@
-# git-server-config
+# GitLike Project<br>
 
-**configuring a git vcs on a server and use from client**
+## **configuring a git vcs on a server and use from client**<br>
+>### Supported Python Version:
+>- python3.6+
+>
 
-Instructions:
+>### Operating Systems For Server:
+>**Gnu/Linux:**<br>
+>UNSupported:<br>
+>- Ubuntu<br>
+>
+>Supported and Tested:<br>
+>- Fedora31<br>
+>- CentOS7/8<br>
+>- Debian9/10<br>
+>
+>**BSD:**<br>
+> ! Is Developing And Will Be Release on Next Versions
+>- FreeBSD
+>
 
-Server:<br>
-
-
-[GitLike Server Notes](https://gitlab.com/omid7798/git-server-config/-/blob/server/GITLIKE_SERVER.md)<br>
-
-Client:<br>
-
-[GitLike Client Notes](https://gitlab.com/omid7798/git-server-config/-/blob/client/GITLIKE_CLIENT.md)
+># Instructions:<br>
+> Server:<br>
+>- [GitLike Server Notes](https://gitlab.com/omid7798/git-server-config/-/blob/server/GITLIKE_SERVER.md)<br>
+>
+>Client:<br>
+>- [GitLike Client Notes](https://gitlab.com/omid7798/git-server-config/-/blob/client/GITLIKE_CLIENT.md)<br>
+>
