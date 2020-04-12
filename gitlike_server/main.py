@@ -648,7 +648,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name=repo_name, username=username, password=password)
+        repository = Repository(repo_name=repo_name, username=username, password=password, os_type=config.os_type)
         repository.show_contributors()
 
         if repository.user_repo_existence():
@@ -669,7 +669,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name=repo_name, username=username, password=password)
+        repository = Repository(repo_name=repo_name, username=username, password=password, os_type=config.os_type)
         member = kwargs['member']
         if repository.user_repo_existence():
             member_user = User(username=member, os_type=config.os_type)
@@ -694,7 +694,7 @@ def choose(**kwargs):
         password = kwargs['password']
         repo_name = kwargs['repo_name']
         member = kwargs['member']
-        repository = Repository(repo_name=repo_name, username=username, password=password)
+        repository = Repository(repo_name=repo_name, username=username, password=password, os_type=config.os_type)
         if repository.user_repo_existence():
             member_user = User(username=member, os_type=config.os_type)
             if member_user.user_existence():
