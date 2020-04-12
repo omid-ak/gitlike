@@ -502,7 +502,7 @@ def admin_choose(**kwargs):
 
     # show repo memebers
     elif choice == '2':
-        repository = Repository(repo_name=kwargs.get('repo_name'))
+        repository = Repository(repo_name=kwargs.get('repo_name'), os_type=config.os_type)
         if repository.repo_existence():
             if repository.contributors:
                 response_message = repository.contributors
@@ -529,7 +529,7 @@ def admin_choose(**kwargs):
 
     # show user repos
     elif choice == '4':
-        git_user = User(username=kwargs.get('git_username'))
+        git_user = User(username=kwargs.get('git_username'), os_type=config.os_type)
         git_user_repos = git_user.all_repos
 
         if git_user_repos:
@@ -566,7 +566,7 @@ def choose(**kwargs):
     if choice == '1':
         username = kwargs['username']
         password = kwargs['password']
-        user = User(username=username, password=password)
+        user = User(username=username, password=password, os_type=config.os_type)
         user.show_repos()
 
         if user.all_repos:
@@ -582,7 +582,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name=repo_name, username=username, password=password)
+        repository = Repository(repo_name=repo_name, username=username, password=password, os_type=config.os_type)
 
         if repository.repo_name_validation():
             if repository.repo_existence():
@@ -609,7 +609,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name=repo_name, username=username, password=password)
+        repository = Repository(repo_name=repo_name, username=username, password=password, os_type=config.os_type)
 
         if repository.repo_existence():
             repository.show_contributors()
@@ -633,7 +633,7 @@ def choose(**kwargs):
         username = kwargs['username']
         password = kwargs['password']
         repo_name = kwargs['repo_name']
-        repository = Repository(repo_name=repo_name, username=username, password=password)
+        repository = Repository(repo_name=repo_name, username=username, password=password, os_type=config.os_type)
         if repository.user_repo_existence():
             response_message = {"resp_msg": "clone or remote with ssh: ", "link": repository.repo_link}
             color            = None
@@ -672,7 +672,7 @@ def choose(**kwargs):
         repository = Repository(repo_name=repo_name, username=username, password=password)
         member = kwargs['member']
         if repository.user_repo_existence():
-            member_user = User(username=member)
+            member_user = User(username=member, os_type=config.os_type)
             if member_user.user_existence():
                 if repository.is_repo_owner():
                     repository.add_contributor(member)
@@ -696,7 +696,7 @@ def choose(**kwargs):
         member = kwargs['member']
         repository = Repository(repo_name=repo_name, username=username, password=password)
         if repository.user_repo_existence():
-            member_user = User(username=member)
+            member_user = User(username=member, os_type=config.os_type)
             if member_user.user_existence():
                 if repository.is_contributor(member):
                     repository.show_contributors()
@@ -728,7 +728,7 @@ def choose(**kwargs):
 
         username = kwargs['username']
         password = kwargs['password']
-        user = User(username=username, password=password)
+        user = User(username=username, password=password, os_type=config.os_type)
         if user.user_existence():
             if user.user_authentication():
                 dl_ch = kwargs['delete_response']
