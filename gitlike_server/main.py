@@ -14,15 +14,13 @@ Main Module To Run
 
 __author__ = "omid <omid7798@gmail.com>"
 
-from .baseconf import Config, Os_Type, Linux_Distro_Type
+from .baseconf import Config
 from .users import User, User_Types
 from .repositories import Repository
 from ._logging import Logger, Log_Type
 from enum import Enum
 import pickle
-import os
 import logging
-import sys
 
 
 # Using from configs
@@ -675,9 +673,13 @@ def choose(**kwargs):
             member_user = User(username=member, os_type=config.os_type)
             if member_user.user_existence():
                 if repository.is_repo_owner():
-                    repository.add_contributor(member)
-                    response_message    = f"{member} added to repository {repository.repo_name}"
-                    color               = Text_Color.SUCCESS.value
+                    if repository.is_contributor(member) is False:
+                        repository.add_contributor(member)
+                        response_message    = f"{member} added to repository {repository.repo_name}"
+                        color               = Text_Color.SUCCESS.value
+                    else:
+                        response_message    = f"{member} already subscribed in repository {repository.repo_name}"
+                        color               = Text_Color.WARNING.value
                 else:
                     response_message    = "Permission Denied!\nyou have not privilege to add member to this repository"
                     color               = Text_Color.ERROR.value
