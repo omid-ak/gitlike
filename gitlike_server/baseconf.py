@@ -134,6 +134,13 @@ class Config:
         try:
 
             if self.os_type.name is Os_Type.LINUX.name:
+                if self.distro_type is Linux_Distro_Type.REDHAT:
+                    res = subprocess.check_output("systemctl is-active firewalld", shell=True)
+                    if res.decode().strip() == 'active':
+                        res = subprocess.check_output(f"firewall-cmd --list-ports", shell=True).decode().split()
+                        if f"{self.server_port}/tcp" in res:
+                            return True
+
                 res = subprocess.check_output(f"iptables -nL | grep 'tcp dpt:{self.server_port}'", shell=True)
             
             elif self.os_type.name is Os_Type.FREE_BSD.name:
@@ -150,6 +157,10 @@ class Config:
         """ Openning 7920 port if rule not exists for received connections """
         if self.firewall_check() is False:
             if self.os_type.name is Os_Type.LINUX.name:
+                if self.distro_type.name is Linux_Distro_Type.REDHAT.name:
+                    res = subprocess.check_output("systemctl is-active firewalld", shell=True)
+                    if res.decode().strip() == 'active':
+                        os.system(f"firewall-cmd --zone=public --add-port={self.server_port}/tcp")
                 os.system(f"iptables -I INPUT -p tcp -m tcp --dport {self.server_port} -j ACCEPT")
             elif self.os_type.name is Os_Type.FREE_BSD.name:
                 os.system(f"ipfw -q add allow tcp from any to any {self.server_port}")
