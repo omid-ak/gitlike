@@ -22,14 +22,14 @@ import subprocess
 
 
 class Os_Type(Enum):
-    LINUX       = "Linux"
-    FREE_BSD    = "FreeBSD"
+    LINUX           = "Linux"
+    FREE_BSD        = "FreeBSD"
     UNSUPPORTED     = "Unsupported"
 
 
 class Linux_Distro_Type(Enum):
-    REDHAT  = ['Fedora', 'CentOS', 'CentOS Linux']
-    DEBIAN  = ['Ubuntu', 'Debian', 'Debian GNU/Linux']
+    REDHAT      = ['Fedora', 'CentOS Linux', 'Red Hat Enterprise Linux']
+    DEBIAN      = ['Ubuntu', 'Debian GNU/Linux']
     UNSUPPORTED = "Unsupported"
 
 
