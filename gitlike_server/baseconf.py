@@ -18,18 +18,20 @@ import grp
 import subprocess
 
 
-
-
 """define multiple distribution and Operating Systems"""
 
+
 class Os_Type(Enum):
-    LINUX       = "Linux"
-    FREE_BSD    = "FreeBSD"
+    LINUX           = "Linux"
+    FREE_BSD        = "FreeBSD"
     UNSUPPORTED     = "Unsupported"
+
+
 class Linux_Distro_Type(Enum):
-    REDHAT  = ['Fedora', 'CentOS', 'CentOS Linux']
-    DEBIAN  = ['Ubuntu', 'Debian', 'Debian GNU/Linux'] 
+    REDHAT      = ['Fedora', 'CentOS Linux', 'Red Hat Enterprise Linux']
+    DEBIAN      = ['Ubuntu', 'Debian GNU/Linux']
     UNSUPPORTED = "Unsupported"
+
 
 class Shell:
     def __init__(self, sh_name):
@@ -38,7 +40,7 @@ class Shell:
         self.shell_existence()
 
     def shell_existence(self):
-        if os.path.exists(self.sh_name) or self.sh_name in open("/etc/shells", "r").read().split("\n"):
+        if os.path.exists(self.sh_name) or self.sh_name in open("/etc/shells", "r").read().splitlines():
             self.shell_existence_status = True
         else:
             self.shell_existence_status = False
@@ -62,8 +64,7 @@ class Group:
             self.grp_existence_status = False
 
     def get_group_members(self):
-        return grp.getgrnam(self.grp_name).gr_mem 
-
+        return grp.getgrnam(self.grp_name).gr_mem
 
     def create_group(self, os_type):
         if self.grp_existence_status is False:
@@ -71,6 +72,7 @@ class Group:
                 os.system(f"groupadd {self.grp_name}")
             elif os_type is Os_Type.FREE_BSD:
                 os.system(f"pw group add {self.grp_name}")
+
 
 class Config:
     def __init__(self):
@@ -112,9 +114,9 @@ class Config:
 
     def calc_ip(self):
         self.ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
-    
+
     def dependencies_installation_check(self):
-        if os.path.exists("/usr/bin/git") is True and os.path.exists("/usr/bin/nmap") is True:
+        if os.path.exists("/usr/bin/git"):
             self.dependencies_installation_status  = True
         else:
             self.dependencies_installation_status  = False
@@ -123,34 +125,43 @@ class Config:
         if self.dependencies_installation_status is False:
             if self.os_type.name is Os_Type.LINUX:
                 if self.distro_type.name is Linux_Distro_Type.REDHAT.name:
-                    os.system('yum update -y && yum install git -y && yum install nmap -y')
+                    os.system('yum update -y && yum install git -y')
                 if self.distro_type.name is Linux_Distro_Type.DEBIAN.name:
-                    os.system('apt update -y && apt install git -y && apt install nmap-y')
+                    os.system('apt update -y && apt install git -y')
             elif self.os_type.name is Os_Type.FREE_BSD:
                 os.system("pkg update && pkg upgrade -y && pkg install git -y")
-    
+
     def firewall_check(self):
-
-        try:
-
-            if self.os_type.name is Os_Type.LINUX.name:
-                if self.distro_type is Linux_Distro_Type.REDHAT:
+        global res
+        if self.os_type.name is Os_Type.LINUX.name:
+            if self.distro_type is Linux_Distro_Type.REDHAT:
+                try:
                     res = subprocess.check_output("systemctl is-active firewalld", shell=True)
+                except subprocess.CalledProcessError:
+                    res = None
+                if res is not None:
                     if res.decode().strip() == 'active':
-                        res = subprocess.check_output(f"firewall-cmd --list-ports", shell=True).decode().split()
+                        try:
+                            res = subprocess.check_output(f"firewall-cmd --list-ports", shell=True).decode().split()
+                        except subprocess.CalledProcessError:
+                            res = None
+                    if res is not None:
                         if f"{self.server_port}/tcp" in res:
                             return True
-
+            try:
                 res = subprocess.check_output(f"iptables -nL | grep 'tcp dpt:{self.server_port}'", shell=True)
-            
-            elif self.os_type.name is Os_Type.FREE_BSD.name:
-                res = subprocess.check_output(f"ipfw list | grep 'allow tcp from any to any {self.server_port}'", shell=True)
+            except subprocess.CalledProcessError:
+                res = None
 
-            if res:
-                return True
-            else:
-                return False
-        except subprocess.CalledProcessError:
+        elif self.os_type.name is Os_Type.FREE_BSD.name:
+            try:
+                res = subprocess.check_output(f"ipfw list | grep 'allow tcp from any to any {self.server_port}'", shell=True)
+            except subprocess.CalledProcessError:
+                res = None
+
+        if res is not None:
+            return True
+        else:
             return False
 
     def firewall_conf(self):
@@ -158,9 +169,13 @@ class Config:
         if self.firewall_check() is False:
             if self.os_type.name is Os_Type.LINUX.name:
                 if self.distro_type.name is Linux_Distro_Type.REDHAT.name:
-                    res = subprocess.check_output("systemctl is-active firewalld", shell=True)
-                    if res.decode().strip() == 'active':
-                        os.system(f"firewall-cmd --zone=public --add-port={self.server_port}/tcp")
+                    try:
+                        res = subprocess.check_output("systemctl is-active firewalld", shell=True)
+                    except subprocess.CalledProcessError:
+                        res = None
+                    if res is not None:
+                        if res.decode().strip() == 'active':
+                            os.system(f"firewall-cmd --zone=public --add-port={self.server_port}/tcp")
                 os.system(f"iptables -I INPUT -p tcp -m tcp --dport {self.server_port} -j ACCEPT")
             elif self.os_type.name is Os_Type.FREE_BSD.name:
                 os.system(f"ipfw -q add allow tcp from any to any {self.server_port}")
@@ -184,4 +199,3 @@ class Config:
             self.os_type = Os_Type.FREE_BSD
         else:
             self.os_type = Os_Type.UNSUPPORTED
-
