@@ -148,6 +148,8 @@ class Config:
                     if res is not None:
                         if f"{self.server_port}/tcp" in res:
                             return True
+                        else:
+                            return False
             try:
                 res = subprocess.check_output(f"iptables -nL | grep 'tcp dpt:{self.server_port}'", shell=True)
             except subprocess.CalledProcessError:
