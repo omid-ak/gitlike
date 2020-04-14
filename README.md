@@ -11,10 +11,14 @@
 >- Ubuntu<br>
 >
 >Supported and Tested:<br>
+>- RHEL8
 >- Fedora31<br>
 >- CentOS7/8<br>
 >- Debian9/10<br>
+
+>**Likely other Versions be Compatible.**<br>
 >
+
 >**BSD:**<br>
 > ! Is Developing And Will Be Release on Next Versions
 >- FreeBSD
