@@ -11,10 +11,11 @@
 >- Ubuntu<br>
 >
 >Supported and Tested:<br>
->- RHEL8
->- Fedora31<br>
->- CentOS7/8<br>
->- Debian9/10<br>
+>- RHEL 8
+>- Fedora 31<br>
+>- CentOS 7 & 8<br>
+>- Oracle 7.8<br>
+>- Debian 9 & 10<br>
 
 >**Likely other Versions be Compatible.**<br>
 >
