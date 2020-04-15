@@ -28,7 +28,7 @@ class Os_Type(Enum):
 
 
 class Linux_Distro_Type(Enum):
-    REDHAT      = ['Fedora', 'CentOS Linux', 'Red Hat Enterprise Linux']
+    REDHAT      = ['Fedora', 'CentOS Linux', 'Red Hat Enterprise Linux', 'Oracle Linux Server']
     DEBIAN      = ['Ubuntu', 'Debian GNU/Linux']
     UNSUPPORTED = "Unsupported"
 
@@ -85,6 +85,7 @@ class Config:
         self.shell                              = None
         self.os_type                            = None
         self.distro_type                        = None
+        self.distro_type_detail                 = None
         self.dependencies_installation_status   = None
         self.shell_name                         = None
         self.group_name                         = None
@@ -188,6 +189,7 @@ class Config:
             self.os_type = Os_Type.LINUX
             distro_type = distro.name()
             if distro_type:
+                self.distro_type_detail = distro_type
                 if distro_type in Linux_Distro_Type.DEBIAN.value:
                     self.distro_type = Linux_Distro_Type.DEBIAN
                 elif distro_type in Linux_Distro_Type.REDHAT.value:

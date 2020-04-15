@@ -61,7 +61,7 @@ def main():
 
     if config.os_type is Os_Type.LINUX:
         if config.distro_type is Linux_Distro_Type.UNSUPPORTED:
-            msg = "Unsupported Linux Distribution.!"
+            msg = f"Unsupported Linux Distribution {config.distro_type_detail}.!"
             print(msg)
             logger.main_logger(Log_Type=Log_Type.START, log_msg=msg, level=logging.ERROR, version=__version__)
             sys.exit(1)
@@ -72,8 +72,8 @@ def main():
         logger.main_logger(Log_Type=Log_Type.START, log_msg=msg, level=logging.INFO, version=__version__)
         sys.exit(0)
 
-    print(f"{config.os_type.value} Operating System")
-
+    print(f"{config.os_type.value} Operating System.")
+    print(f"{config.distro_type_detail} Distribution.")
     config.company_name = input("Entenr Your Company Name: ")
     print('checking for dependencies...')
 
